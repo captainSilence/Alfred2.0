@@ -1,0 +1,95 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/sidebars.css' %}">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+
+    <title>C1 NSO UI</title>
+</head>
+<body>
+    <div class="bg">
+        <div class="container">
+            <div class="row" style="height: 600px;">
+                <div class="row justify-content-center align-items-end">
+                    <div class="col-sm-3 p-3">
+                        <img src="{% static 'img/sparklight_logo_before_after.png' %}" alt="" width="300" style="border-radius: 40px">
+                    </div>
+                    
+                </div>
+                <div class="row justify-content-center align-items-center" style="height: 200px;">
+                    <div class="col-sm-4 text-white p-3 login_box">                            
+                        <div class="panel panel-info" >
+                            <div class="panel-heading">
+                                <div class="panel-title">Sign In</div>
+                            </div>     
+                                
+                                <img src="{% static 'img/cisco-logo.png' %}" alt="" class="cisco-logo" >                                                            
+                                {% if message %}
+                                <h6 id="auth-message">{{message}}</h6>   
+                                {% endif %}
+                                {% if loggout %}
+                                <h6 id="loggout-message">{{loggout}}</h6>
+                                <div style="padding-top:30px" class="panel-body" >
+                                    <div class="col-sm-12 controls offset-10">                                        
+                                        <a id="btn-login" href="/" class="btn btn-primary">Return</a>
+                                    </div>
+
+                                </div>
+                                {% else %}
+                                <div style="padding-top:30px" class="panel-body" >
+                                    
+                                    <form id="loginform" class="form-horizontal" role="form" action="/authenticate" method="POST">
+                                        {% csrf_token %}
+                                        <div style="margin-bottom: 25px" class="input-group">
+                                                    <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                                                    <input id="login-username" type="text" class="form-control" name="username" value="" placeholder="username">                                        
+                                                </div>
+                                            
+                                        <div style="margin-bottom: 25px" class="input-group">
+                                                    <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
+                                                    <input id="login-password" type="password" class="form-control" name="password" placeholder="password">
+                                                </div>
+                                                
+            
+                
+                
+                                            <div style="margin-top:10px" class="form-group">
+                                                <!-- Button -->
+                
+                                                <div class="col-sm-12 controls offset-10">
+                                                    <input type="submit" value="Login" class="btn btn-primary">
+                                                    
+            
+                                                </div>
+                                            </div> 
+                                    </form>
+    
+                                {% endif %}
+                                                             
+                                
+            
+            
+            
+                                </div>                     
+                        </div>  
+                    </div>
+                </div>
+
+            </div>
+            </div>
+
+    </div>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>    
+    <script src="{% static 'js/sidebars.js' %}"></script>    
+
+</body>
+</html>
+
+
+

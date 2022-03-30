@@ -1,0 +1,10 @@
+web_project/portal/__pycache__/
+web_project/web_project/__pycache__/
+web_project/portal/migrations/__pycache__/
+.DS_Store
+web_project/.DS_Store
+web_project/portal/.DS_Store
+logs/*
+nso
+src
+.scannerwork/

@@ -1,0 +1,18 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h2 class="text-white p-3">Error Page | Dia Single Home</h2>
+    <input type="hidden" id ="error_message" value="{{ error_message }}">
+    <div class="row">
+        
+        <!-- <div class="col-sm-2"></div> -->
+        <div class="col-sm-2">
+            <img id="something-wrong" src="/static/img/something-wrong.png" alt="">
+        </div>
+        <div class="col-sm-5" id="error-section">
+
+        </div>
+    </div>
+    <script src="/static/js/error.js"></script>
+{% endblock %}
+

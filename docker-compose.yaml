@@ -1,0 +1,125 @@
+version: "3"
+services:
+  nso-prod:
+    environment:
+      - SSH_PORT=2024
+      - HTTPS_ENABLE=true
+      - ADMIN_PASSWORD=admin
+    image: cisco-nso-base:${version}
+    container_name: nso-${name}-prod
+    hostname: nso-${name}-prod
+    networks:
+      - nso-in-docker
+    expose:
+      - "80"
+      - "2024"
+    ports:
+      - 80${id}:443
+      - 22${id}:2024
+    volumes:
+      - ./nso:/nso
+      - ./logs:/log
+      - ./src:/src
+    extra_hosts:
+      - "asr9000-lab: 172.18.87.102"
+    restart: unless-stopped
+  nso-dev:
+    image: cisco-nso-dev:${version}
+    container_name: nso-${name}-dev
+    hostname: nso-${name}-dev
+    networks:
+      - nso-in-docker
+    volumes:
+      - ./nso:/nso
+      - ./src:/src
+    entrypoint: /usr/bin/tail
+    command: -f /dev/null
+    restart: unless-stopped
+  nso-netsim:
+    image: cisco-nso-base:${version}
+    container_name: nso-${name}-netsim
+    hostname: nso-${name}-netsim
+    networks:
+      - nso-in-docker
+    entrypoint: /usr/bin/tail
+    command: -f /dev/null
+    volumes:
+      - ./nso:/nso
+      - ./src:/src
+    restart: unless-stopped
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres123
+      - POSTGRES_DB=c1_data
+    ports:
+      - 5410:5432
+    networks:
+      - nso-in-docker
+    # volumes:
+    #   - ./postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+  gunicorn:
+    image: c1-gunicorn:latest
+    environment:
+      - NSO_ADDRESS=nso-c1-prod
+      - NSO_PORT=443
+      - DATABASE_ADDRESS=postgres
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres123
+      - NSO_USERNAME=admin
+      - NSO_PASSWORD=admin
+      - SECRET_KEY=django-insecure-u9d-os77m5y07me@*l-idgj^(w!2d7d20+gvm#0qmdaup&+xd_
+      - DEBUG=False
+    container_name: gunicorn
+    build:
+      context: ./
+      dockerfile: ./gunicorn/Dockerfile
+    hostname: gunicorn
+    networks:
+      - nso-in-docker
+    expose:
+      - "8000"
+    ports:
+      - 8000:8000
+    volumes:
+      - ./web_project:/root/web_project
+      - ./nginx/static:/root/static
+      - ./certs:/root/certs
+    restart: unless-stopped
+  nginx:
+    build:
+      context: ./
+      dockerfile: ./nginx/Dockerfile
+    image: c1-nginx:latest
+    container_name: nginx
+    ports:
+      - 443:443
+    networks:
+      - nso-in-docker
+    volumes:
+      - ./nginx/static:/vol/static
+      - ./certs:/vol/certs
+    restart: unless-stopped
+  sonarscanner:
+    profiles:
+      - sonarqube
+    image: sonarsource/sonar-scanner-cli:latest
+    container_name: sonarscanner
+    environment:
+      - SONAR_HOST_URL=http://10.96.248.56:9000
+      - SONAR_LOGIN=fa10f515e177dfea68b81253639cfd5583bf4706
+    networks:
+      - nso-in-docker
+    volumes:
+      - ./:/usr/src
+networks:
+  nso-in-docker:
+    driver: bridge
+    name: nso-in-docker-${id}
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.${subnet}.0/24

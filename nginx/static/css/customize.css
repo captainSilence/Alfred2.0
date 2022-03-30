@@ -1,0 +1,80 @@
+.card-header {    
+    background-color:rgba(58, 58, 58, 0.9) !important;
+
+}
+
+.card-body {
+    box-shadow: 5px 5px rgba(0,165,222,0.8) !important;
+}
+
+.input-group-text {
+    background-color:rgba(58, 58, 58, 0.9) !important;
+    color: rgba(0,165,222);    
+    width: 120px;
+    height: 30px;
+    border: 1px solid rgba(0,165,222,0.8) !important;
+} 
+
+.form-check-label {
+    background-color:rgba(58, 58, 58, 0.9) !important;
+    color: rgba(0,165,222);    
+    width: 120px;
+    height: 30px;
+    text-indent: 14px;
+    border-radius: 0.25rem;
+    border: 1px solid rgba(0,165,222,0.8);
+    
+}
+
+#something-wrong {
+    opacity: unset;
+    border-radius: 0.25rem; 
+    width: 240px;
+
+}
+
+.form-control {
+    height: 30px !important;
+}
+
+.form-error {
+    box-shadow: 0 0 10px #b81313;
+}
+
+
+.form-select {
+    height: 30px !important;
+    font-size: smaller;
+
+}
+
+.black-box-index {
+    background: rgba(58, 58, 58, 0.9);  
+    height: 90%;
+    padding-top: 30px;
+    /* text-align: center;     */
+    border-radius: 0.5rem;
+}
+
+
+.text-rigth {
+    text-align: right !important;
+}
+
+#ipv4-spinner, #access-port-spinner, #uplink-port-spinner, #aggregation-port-spinner { 
+    position: absolute;
+    align-items: flex-end;
+    right: 0.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    top:0.2rem;
+    opacity: 0.5;
+    border: 0.3rem solid currentColor;   
+    border-right-color: transparent;
+    background-color: white; 
+    
+}
+
+.form {
+    width: 5rem;
+}

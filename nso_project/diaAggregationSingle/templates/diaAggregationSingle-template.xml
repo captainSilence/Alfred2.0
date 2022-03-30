@@ -1,0 +1,46 @@
+<config-template xmlns="http://tail-f.com/ns/config/1.0">
+  <devices xmlns="http://tail-f.com/ns/ncs">
+    <device>
+      <name>{$DEVICE_NAME}</name>
+      <config>
+        <configuration xmlns="http://xml.juniper.net/xnm/1.1/xnm">
+          <interfaces>
+            <interface>
+              <name>{$ACCESS_INTERFACE}</name>
+              <unit>
+                <name>{$VLAN_NUMBER}</name>
+                <encapsulation>vlan-bridge</encapsulation>
+                <vlan-id>{$VLAN_NUMBER}</vlan-id>
+              </unit>
+            </interface>
+            <interface>
+              <name>irb</name>
+              <unit>
+                <name>{$VLAN_NUMBER}</name>
+                <apply-groups>IRB-Links</apply-groups>
+                <description>{$CUSTOMER_NAME}-INT</description>
+                <family>
+                  <inet>
+                    <address>
+                      <name>{$IPV4_ADDRESS}/{$CIDR_MASK}</name>
+                    </address>
+                  </inet>
+                </family>
+              </unit>
+            </interface>
+          </interfaces>
+          <vlans>
+            <vlan>
+              <name>{$CUSTOMER_NAME}-INT</name>
+              <vlan-id>{$VLAN_NUMBER}</vlan-id>
+              <interface>
+                <name>{$ACCESS_INTERFACE}.{$VLAN_NUMBER}</name>
+              </interface>
+              <l3-interface>irb.{$VLAN_NUMBER}</l3-interface>
+            </vlan>
+          </vlans>
+        </configuration>
+      </config>
+    </device>
+  </devices>
+</config-template>

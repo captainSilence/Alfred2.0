@@ -1,0 +1,13 @@
+<ncs-package xmlns="http://tail-f.com/ns/ncs-packages">
+  <name>diaSingleHome</name>
+  <package-version>1.1</package-version>
+  <description>DIA Single Home ServicePoint</description>
+  <ncs-min-version>5.5</ncs-min-version>
+
+  <component>
+    <name>diaSingleHome</name>
+    <application>
+      <python-class-name>diaSingleHome.diaSingleHome.DIASingleHome</python-class-name>
+    </application>
+  </component>
+</ncs-package>

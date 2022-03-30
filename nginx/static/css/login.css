@@ -1,0 +1,45 @@
+body, html {
+    height: 100%;
+}
+.bg { 
+    /* The image used */
+    background-image: url("/static/img/background.jpeg");    
+    
+    /* Full height */
+    height: 100%; 
+  
+    /* Center and scale the image nicely */
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+
+  }
+img {
+    opacity: 0.9;
+}
+
+.login_box {
+    border-radius: 10px; 
+    background-color:rgba(58, 58, 58, 0.9);
+    /* border: solid 1px rgb(199, 199, 199); */
+    box-shadow: 5px 5px rgba(0,165,222,0.8);
+    
+
+}
+
+.cisco-logo {
+    margin-left: 310px;
+    margin-top: -20px;
+    width: 80px;    
+}
+
+#auth-message {
+    color:red;
+    text-align: center;
+
+}
+
+#loggout-message {
+    color:rgba(0,165,222);
+    text-align: center;
+}
