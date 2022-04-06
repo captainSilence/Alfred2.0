@@ -230,7 +230,7 @@ def api_get_access_interfaces(request):
     vlan666_ports = []
     json_response = {"access-ports": [], "uplink-ports": []}
     if device != '':
-        url = f'http://{settings.NSO_ADDRESS}//restconf/data/tailf-ncs:devices/device={device}/config/tailf-ned-cienacli-acos:vlan/add/vlan=666'
+        url = f'http://{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={device}/config/tailf-ned-cienacli-acos:vlan/add/vlan=666'
         headers = {"Content-Type": "application/yang-data+json"}
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth("autoeng", "xt,xnDHk9t:qdQxm"), verify=False).json()
         for port in response["tailf-ned-cienacli-acos:vlan"][0]['port']:
@@ -265,7 +265,7 @@ def api_get_aggregation_interfaces(request):
         headers = {"Content-Type": "application/yang-data+json"}
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()        
         for port_dict in response["junos:interfaces"]['interface']:
-            if port_is_access(port_dict) == True:
+            if port_is_aggregatrion(port_dict) == True:
                 json_response["aggregation-ports"].append(port_dict["name"])
     else:
         response = {}
