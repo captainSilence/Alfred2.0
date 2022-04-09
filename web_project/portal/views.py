@@ -11,6 +11,7 @@ from django.conf import settings
 import json, sys
 import time
 import pyodbc
+# from . import crq_ticket_class5
 
 
 states = {
@@ -132,14 +133,18 @@ def submit(request):
     data['aggregation'] = {}
     data['aggregation']['device-name'] = request.POST.get('aggregation_device-name')
     data['aggregation']['ipv4-address'] = request.POST.get('aggregation_ipv4-address')
-    data['aggregation']['cidr-mask'] = request.POST.get('aggregation_cidr-mask')
+    data['aggregation']['cidr-mask'] = netmask_to_cidr(request.POST.get('aggregation_cidr-mask'))
     data['aggregation']['access-interface'] = request.POST.get('aggregation_access-interface')
     data['access'] = {}
     data['access']['device-name'] = request.POST.get('access_device-name')
     data['access']['access-port'] = request.POST.get('access_access-port')
     data['access']['uplink-port'] = request.POST.get('access_uplink-port')
 
-    
+    print(data)
+    # summary = "Florida Circuit for testing."
+    # description = "this is a test"
+    # object = crq_ticket_class5.crq_ticket()
+    # object.cls_start(summary, description)
 
     # Path NSO for services
     try:
@@ -295,3 +300,10 @@ def pyodbc_query(cursor, query):
     cursor.execute(query)
     rows = cursor.fetchall()
     return rows
+
+
+def netmask_to_cidr(netmask):
+
+    # param netmask: netmask ip addr (eg: 255.255.255.0)
+    # return: equivalent cidr number to given netmask ip (eg: 24)
+    return sum([bin(int(x)).count('1') for x in netmask.split('.')])

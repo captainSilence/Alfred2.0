@@ -4,7 +4,7 @@ import ncs
 import _ncs
 import socket
 from ncs.application import Service
-from scripts.genie_conection import GenieConnection
+# from scripts.genie_conection import GenieConnection
 import uuid, os, re, json
 
 pre_post_checks_key = r'!'
@@ -20,47 +20,47 @@ class PreChecks(ncs.application.NanoService):
     def cb_nano_create(self, tctx, root, service, plan, component, state, proplist, component_proplist):
         self.log.info("RunPreChecks:", state)
         # Call external pre checks script needs to be async            
-        executionId = str(uuid.uuid4())        
-        peName = service.aggregation.device_name
-        peAddress = root.devices.device[peName].address
-        authgroup = root.devices.device[peName].authgroup
-        username = root.devices.authgroups.group[authgroup].default_map.remote_name
-        encrypted_password = root.devices.authgroups.group[authgroup].default_map.remote_password
-        m = ncs.maapi.Maapi()
-        m.install_crypto_keys()
-        password = str(_ncs.decrypt(encrypted_password))
-        custAddress = service.aggregation.ipv4_address
-        execType = 'pre-checks'
-        try:
-            connection = GenieConnection(executionId, username, password, custAddress, peName, peAddress, execType)
-            connection.connect()
-        except Exception as e:
-            self.log.error('Error:', e)
-            raise Exception(e)
+        # executionId = str(uuid.uuid4())        
+        # peName = service.aggregation.device_name
+        # peAddress = root.devices.device[peName].address
+        # authgroup = root.devices.device[peName].authgroup
+        # username = root.devices.authgroups.group[authgroup].default_map.remote_name
+        # encrypted_password = root.devices.authgroups.group[authgroup].default_map.remote_password
+        # m = ncs.maapi.Maapi()
+        # m.install_crypto_keys()
+        # password = str(_ncs.decrypt(encrypted_password))
+        # custAddress = service.aggregation.ipv4_address
+        # execType = 'pre-checks'
+        # try:
+        #     connection = GenieConnection(executionId, username, password, custAddress, peName, peAddress, execType)
+        #     connection.connect()
+        # except Exception as e:
+        #     self.log.error('Error:', e)
+        #     raise Exception(e)
  
-        root.diaChecks__diaChecks[service.customer_name, service.vlan_number].uuid = executionId
-        log_folder = os.path.join('outputs', executionId, execType, peName)
-        if os.path.exists(log_folder):
-            list_files = os.listdir(log_folder)
-            if len(list_files) > 0:
-                with open(os.path.join(log_folder, list_files[0]), 'r') as fp:
-                    raw_output = fp.read()
-                    if re.search(pre_post_checks_key, raw_output):
-                        # If at least one ping responded mark response as fail for pre-checks
-                        error_message = 'Pre-Checks Failed, ip address is not free'                                        
-                        self.log.error("Error:", error_message)
-                        raise Exception(error_message)                         
+        # root.diaChecks__diaChecks[service.customer_name, service.vlan_number].uuid = executionId
+        # log_folder = os.path.join('outputs', executionId, execType, peName)
+        # if os.path.exists(log_folder):
+        #     list_files = os.listdir(log_folder)
+        #     if len(list_files) > 0:
+        #         with open(os.path.join(log_folder, list_files[0]), 'r') as fp:
+        #             raw_output = fp.read()
+        #             if re.search(pre_post_checks_key, raw_output):
+        #                 # If at least one ping responded mark response as fail for pre-checks
+        #                 error_message = 'Pre-Checks Failed, ip address is not free'                                        
+        #                 self.log.error("Error:", error_message)
+        #                 raise Exception(error_message)                         
                       
-                    else:
-                        root.diaChecks__diaChecks[service.customer_name, service.vlan_number].pre_checks = True
-            else:                
-                error_message = 'Pre Checks did not collected device output'
-                self.log.error("Error:", error_message)
-                raise Exception(error_message)
-        else:            
-            error_message = 'Pre Checks did not collected device output'
-            self.log.error("Error:", error_message)
-            raise Exception(error_message)
+        #             else:
+        #                 root.diaChecks__diaChecks[service.customer_name, service.vlan_number].pre_checks = True
+        #     else:                
+        #         error_message = 'Pre Checks did not collected device output'
+        #         self.log.error("Error:", error_message)
+        #         raise Exception(error_message)
+        # else:            
+        #     error_message = 'Pre Checks did not collected device output'
+        #     self.log.error("Error:", error_message)
+        #     raise Exception(error_message)
 
         # Comment next row for production
         # root.diaChecks__diaChecks[service.customer_name, service.vlan_number].pre_checks = True
@@ -103,45 +103,45 @@ class PostChecks(ncs.application.NanoService):
     @ncs.application.NanoService.create
     def cb_nano_create(self, tctx, root, service, plan, component, state, proplist, component_proplist):        
         self.log.info("RunPostChecks:", state)
-        executionId = root.diaChecks__diaChecks[service.customer_name, service.vlan_number].uuid
-        peName = service.aggregation.device_name
-        peAddress = root.devices.device[peName].address
-        authgroup = root.devices.device[peName].authgroup
-        username = root.devices.authgroups.group[authgroup].default_map.remote_name
-        encrypted_password = root.devices.authgroups.group[authgroup].default_map.remote_password
-        m = ncs.maapi.Maapi()
-        m.install_crypto_keys()
-        password = str(_ncs.decrypt(encrypted_password))
-        custAddress = service.aggregation.ipv4_address       
-        execType = 'post-checks'        
-        try:
-            connection = GenieConnection(executionId, username, password, custAddress, peName, peAddress, execType)
-            connection.connect()
-        except Exception as e:
-            self.log.error('Error:', e)
-            raise Exception(e)
+        # executionId = root.diaChecks__diaChecks[service.customer_name, service.vlan_number].uuid
+        # peName = service.aggregation.device_name
+        # peAddress = root.devices.device[peName].address
+        # authgroup = root.devices.device[peName].authgroup
+        # username = root.devices.authgroups.group[authgroup].default_map.remote_name
+        # encrypted_password = root.devices.authgroups.group[authgroup].default_map.remote_password
+        # m = ncs.maapi.Maapi()
+        # m.install_crypto_keys()
+        # password = str(_ncs.decrypt(encrypted_password))
+        # custAddress = service.aggregation.ipv4_address       
+        # execType = 'post-checks'        
+        # try:
+        #     connection = GenieConnection(executionId, username, password, custAddress, peName, peAddress, execType)
+        #     connection.connect()
+        # except Exception as e:
+        #     self.log.error('Error:', e)
+        #     raise Exception(e)
 
-        log_folder = os.path.join('outputs', executionId, execType, peName)
-        if os.path.exists(log_folder):
-            list_files = os.listdir(log_folder)
-            if len(list_files) > 0:
-                with open(os.path.join(log_folder, list_files[0]), 'r') as fp:
-                    raw_output = fp.read()
-                    if re.search(pre_post_checks_key, raw_output):
-                        # If at least one ping responded mark response as success
-                        root.diaChecks__diaChecks[service.customer_name, service.vlan_number].post_checks = True
-                    else:                    
-                        error_message = 'Post-Checks Failed, ip address is not reachable'
-                        self.log.warning("Warning:", error_message)
-                        raise Exception(error_message)
-            else:
-                error_message = 'Post Checks did not collected device output'
-                self.log.error("Error:", error_message)
-                raise Exception(error_message)
-        else:
-            error_message = 'Post Checks did not collected device output'
-            self.log.error("Error:", error_message)
-            raise Exception(error_message)
+        # log_folder = os.path.join('outputs', executionId, execType, peName)
+        # if os.path.exists(log_folder):
+        #     list_files = os.listdir(log_folder)
+        #     if len(list_files) > 0:
+        #         with open(os.path.join(log_folder, list_files[0]), 'r') as fp:
+        #             raw_output = fp.read()
+        #             if re.search(pre_post_checks_key, raw_output):
+        #                 # If at least one ping responded mark response as success
+        #                 root.diaChecks__diaChecks[service.customer_name, service.vlan_number].post_checks = True
+        #             else:                    
+        #                 error_message = 'Post-Checks Failed, ip address is not reachable'
+        #                 self.log.warning("Warning:", error_message)
+        #                 raise Exception(error_message)
+        #     else:
+        #         error_message = 'Post Checks did not collected device output'
+        #         self.log.error("Error:", error_message)
+        #         raise Exception(error_message)
+        # else:
+        #     error_message = 'Post Checks did not collected device output'
+        #     self.log.error("Error:", error_message)
+        #     raise Exception(error_message)
 
         # Remove next row for production environment:
         # root.diaChecks__diaChecks[service.customer_name, service.vlan_number].post_checks = True

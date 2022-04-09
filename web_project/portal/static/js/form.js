@@ -40,8 +40,10 @@ function validateForm(event){
 
     let accessDeviceSelect = document.querySelector('select[name="access_device-name"]')
     let aggregationDeviceSelect = document.querySelector('select[name="aggregation_device-name"]')
+    // console.log(aggregationDeviceSelect)
     // debugger;
-    let aggregationCIDRMask = document.querySelector('select[name="aggregation_cidr-mask"]')
+    let aggregationCIDRMask = document.querySelector('input[name="aggregation_cidr-mask"]')
+    console.log(aggregationCIDRMask)
 
     customerInput.classList.remove('form-error')
     vlanInput.classList.remove('form-error') 
@@ -52,6 +54,7 @@ function validateForm(event){
     
     accessDeviceSelect.classList.remove('form-error')
     aggregationDeviceSelect.classList.remove('form-error')
+    // debugger;
     aggregationCIDRMask.classList.remove('form-error')
 
     
@@ -118,6 +121,7 @@ function renderModal() {
     
     let formData = new FormData(formElement)
     let tableHTML = ''
+    // debugger;
     for (var [key, value] of formData.entries()) {
         translatedKey = formFieldsDict[key]
         if (!(key.includes('csrf'))) {
@@ -126,6 +130,7 @@ function renderModal() {
       }
 
     confirmationTable.innerHTML = tableHTML;
+    // debugger;
     let confirmationModal = new bootstrap.Modal(document.querySelector('#confirmationModal'));
     confirmationModal.toggle();
 
@@ -139,7 +144,7 @@ confirmationModalSubmit.addEventListener('click', () => {
     
     let confirmationModalSubmit = document.querySelector('#confirmation-modal-submit').disabled = true;
     let confirmationModalCancel = document.querySelector('#confirmation-modal-cancel').disabled = true;
-
+    debugger;
     let form = document.querySelector('#dia-form');
     form.submit();
 })
