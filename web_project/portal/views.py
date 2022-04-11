@@ -11,6 +11,8 @@ from django.conf import settings
 import json, sys
 import time
 import pyodbc
+import paramiko
+import re
 # from . import crq_ticket_class5
 
 
@@ -276,6 +278,58 @@ def api_get_aggregation_interfaces(request):
         response = {}
     return JsonResponse(json_response)
 
+
+@require_POST
+@login_required(login_url='/login')
+@api_view(['POST'])
+def api_get_all_interfaces(request):
+    data = request.data
+    switch = data['eds_switch']
+    router = data['acx_router']
+    vlan666_ports = []
+    json_response = {"access-ports": [], "uplink-ports": [], "aggregation-ports": []}
+    if switch != '' and router != '':
+        url = f'http://{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/remote/set/ip'
+        headers = {"Content-Type": "application/yang-data+json"}
+        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth("autoeng", "xt,xnDHk9t:qdQxm"), verify=False)
+        eds_ip = response.json()['tailf-ned-cienacli-acos:ip'].split('/')[0]
+
+
+        url = f'http://{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/set/gateway'
+        headers = {"Content-Type": "application/yang-data+json"}
+        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth("autoeng", "xt,xnDHk9t:qdQxm"), verify=False)
+        car_ip = response.json()['tailf-ned-cienacli-acos:gateway']
+
+
+        url = f'http://{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:vlan/add/vlan=666'
+        headers = {"Content-Type": "application/yang-data+json"}
+        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth("autoeng", "xt,xnDHk9t:qdQxm"), verify=False).json()
+        for port in response["tailf-ned-cienacli-acos:vlan"][0]['port']:
+           vlan666_ports.append(port['id'])
+
+
+        url = f'http://{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:port/tailf-ned-cienacli-acos:set'
+        headers = {"Content-Type": "application/yang-data+json"}
+        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
+
+
+        for port_dict in response["tailf-ned-cienacli-acos:set"]['port']:            
+            if port_is_access(port_dict, vlan666_ports) == True:
+                json_response["access-ports"].append(port_dict["name"])
+
+        print('111111111111111')
+        uplink_port = calculate_access_uplink(eds_ip, car_ip)
+        json_response["uplink-ports"].append(uplink_port)
+        downlink_port = calculate_agg_downlink(eds_ip, car_ip)
+        json_response["aggregation-ports"].append(downlink_port)
+
+    else:
+        response = {}
+        
+    return JsonResponse(json_response)
+
+
+
 # Validate Ports
 
 def port_is_access(port_dict, vlan666_dict):
@@ -307,3 +361,50 @@ def netmask_to_cidr(netmask):
     # param netmask: netmask ip addr (eg: 255.255.255.0)
     # return: equivalent cidr number to given netmask ip (eg: 24)
     return sum([bin(int(x)).count('1') for x in netmask.split('.')])
+
+
+def calculate_access_uplink(eds_ip, acx_ip):
+    startTime = time.time()
+    child = paramiko.SSHClient()
+    child.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    print("22222")
+    child.connect(eds_ip, 22, 'autoeng', '}-75S^:j.mf@YJQm')
+    print("33333")
+    stdin, stdout, stderr = child.exec_command(f'arp show intf remote')
+    print("4444")
+    string = stdout.read().decode('ascii').strip("\n")    
+    mac = re.search(f"\|\s+{acx_ip}\s+\|\s+(\w+:\w+:\w+:\w+:\w+:\w+)", string).group(1)
+
+    stdin, stdout, stderr = child.exec_command(f'flow mac-addr show mac {mac}')
+    string = stdout.read().decode('ascii').strip("\n")    
+    uplinlport=re.search(f"\|\s+{mac}\s\|\s+(.+?)\s+\|", string, re.IGNORECASE).group(1)
+    execute_Time = time.time() - startTime
+    print("Request completed in {0:.0f}s".format(execute_Time))
+    return uplinlport
+
+
+def calculate_agg_downlink(eds_ip, acx_ip):
+    child = paramiko.SSHClient()
+    child.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    child.connect(acx_ip, 22, 'autoeng', '}-75S^:j.mf@YJQm')
+    stdin, stdout, stderr = child.exec_command(f'show arp no-resolve | match {eds_ip}')
+    string = stdout.read().decode('ascii').strip("\n")
+    # print(string)  
+    mac = re.search(f"(\w+:\w+:\w+:\w+:\w+:\w+)\s+{eds_ip}", string).group(1)
+    print(mac)
+
+    child = paramiko.SSHClient()
+    child.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    child.connect('10.204.8.1', 22, 'autoeng', '}-75S^:j.mf@YJQm')
+    stdin, stdout, stderr = child.exec_command(f'show arp | except em')
+    string = stdout.read().decode('ascii').strip("\n")
+    outIntf = re.search(f"{mac}.+\s+\[*(\w+-\d+/\d+/\d+)", string)
+    outIntfae = re.search(f"{mac}.+\s+\[*(ae\d+)", string)
+
+    if outIntf:
+        downlink = outIntf.group(1)
+        print(downlink)
+    elif outIntfae:
+        downlink = outIntfae.group(1)
+        print(downlink)
+    return downlink

@@ -254,80 +254,130 @@ checkBox.addEventListener('change', () => {
 
 // Render Access Ports
 let accessDeviceSelect = document.querySelector('select[name="access_device-name"]')
+let aggregationDeviceSelect = document.querySelector('select[name="aggregation_device-name"]')
 accessDeviceSelect.addEventListener('change', () => {
+    console.log(aggregationDeviceSelect.value == null)
+    console.log(aggregationDeviceSelect.value == "")
+    if (aggregationDeviceSelect.value != ""){   
+        let accessPortSpinner = document.querySelector('#access-port-spinner')
+        let uplinkPortSpinner = document.querySelector('#uplink-port-spinner')
+        let aggregationPortSpinner = document.querySelector('#aggregation-port-spinner')
+        accessPortSpinner.classList.remove('d-none')
+        uplinkPortSpinner.classList.remove('d-none')
+        aggregationPortSpinner.classList.remove('d-none')
 
-    let accessPortSpinner = document.querySelector('#access-port-spinner')
-    let uplinkPortSpinner = document.querySelector('#uplink-port-spinner')
-    accessPortSpinner.classList.remove('d-none')
-    uplinkPortSpinner.classList.remove('d-none')
+        let accessPortSelect = document.querySelector('select[name="access_access-port"]')
+        let uplinkPortSelect = document.querySelector('select[name="access_uplink-port"]') 
+        let aggregationPortSelect = document.querySelector('select[name="aggregation_access-interface"]')       
+        accessPortSelect.innerHTML = '';
+        uplinkPortSelect.innerHTML = '';
+        aggregationPortSelect.innerHTML = '';
 
-    let accessPortSelect = document.querySelector('select[name="access_access-port"]')
-    let uplinkPortSelect = document.querySelector('select[name="access_uplink-port"]')        
-    accessPortSelect.innerHTML = '';
-    uplinkPortSelect.innerHTML = '';
+        let accessDevice = accessDeviceSelect.value
+        let aggregationDevice = aggregationDeviceSelect.value      
+        body = {"eds_switch": accessDevice, "acx_router": aggregationDevice}
+        fetch('/api/v1/get-all-interfaces/', {        
+            method: 'POST',        
+            body: JSON.stringify(body),
+            headers: {
+                "X-CSRFToken": getCookie("csrftoken"),
+                "Accept": "application/json",
+                'Content-Type': 'application/json'
+            },
+            credentials: "same-origin"
+            }).then (response => {        
+            return response.json().then(data => {
+                accessPortSpinner.classList.add('d-none')
+                uplinkPortSpinner.classList.add('d-none')
+                aggregationPortSpinner.classList.add('d-none')
+                let accessPortsHTML = '';            
+                for (let i = 0; i < data['access-ports'].length; i++ ) {
+                    let port = data['access-ports'][i];
+                    accessPortsHTML = accessPortsHTML + `<option value="${port}" >${port}</option>\n`;
+                }
+                accessPortSelect.innerHTML = accessPortsHTML
 
-    let accessDevice = accessDeviceSelect.value        
-    body = {"device": accessDevice}
-    fetch('/api/v1/get-access-interfaces/', {        
-        method: 'POST',        
-        body: JSON.stringify(body),
-        headers: {
-            "X-CSRFToken": getCookie("csrftoken"),
-            "Accept": "application/json",
-            'Content-Type': 'application/json'
-          },
-        credentials: "same-origin"
-    }).then (response => {        
-        return response.json().then(data => {
-            accessPortSpinner.classList.add('d-none')
-            uplinkPortSpinner.classList.add('d-none')
-            let accessPortsHTML = '';            
-            for (let i = 0; i < data['access-ports'].length; i++ ) {
-                let port = data['access-ports'][i];
-                accessPortsHTML = accessPortsHTML + `<option value="${port}" >${port}</option>\n`;
-            }
-            accessPortSelect.innerHTML = accessPortsHTML
+                let uplinkPortsHTML = '';
+                for (let i = 0; i < data['uplink-ports'].length; i++ ) {
+                    let port = data['uplink-ports'][i];
+                    uplinkPortsHTML = uplinkPortsHTML + `<option value="${port}" >${port}</option>\n`;
+                }
+                uplinkPortSelect.innerHTML = uplinkPortsHTML
 
-            let uplinkPortsHTML = '';
-            for (let i = 0; i < data['uplink-ports'].length; i++ ) {
-                let port = data['uplink-ports'][i];
-                uplinkPortsHTML = uplinkPortsHTML + `<option value="${port}" >${port}</option>\n`;
-            }
-            uplinkPortSelect.innerHTML = uplinkPortsHTML
-            
-        })        
-    })
+                let aggregationPortsHTML = '';
+                for (let i = 0; i < data['aggregation-ports'].length; i++ ) {
+                    let port = data['aggregation-ports'][i];
+                    aggregationPortsHTML = aggregationPortsHTML + `<option value="${port}" >${port}</option>\n`;
+                }
+                aggregationPortSelect.innerHTML = aggregationPortsHTML
+
+                
+                })        
+            })
+    } else {
+        alert("please select the ACX router")
+    }
 });
 // Render Aggregation Ports
-let aggregationDeviceSelect = document.querySelector('select[name="aggregation_device-name"]')
+// let aggregationDeviceSelect = document.querySelector('select[name="aggregation_device-name"]')
 aggregationDeviceSelect.addEventListener('change', () => {
-    let aggregationPortSpinner = document.querySelector('#aggregation-port-spinner')
-    aggregationPortSpinner.classList.remove('d-none')
-    let aggregationPortSelect = document.querySelector('select[name="aggregation_access-interface"]')
-    aggregationPortSelect.innerHTML = '';
+    if (accessDeviceSelect.value != ""){
+        let accessPortSpinner = document.querySelector('#access-port-spinner')
+        let uplinkPortSpinner = document.querySelector('#uplink-port-spinner')
+        let aggregationPortSpinner = document.querySelector('#aggregation-port-spinner')
+        accessPortSpinner.classList.remove('d-none')
+        uplinkPortSpinner.classList.remove('d-none')
+        aggregationPortSpinner.classList.remove('d-none')
 
-    let aggregationDevice = aggregationDeviceSelect.value        
-    body = {"device": aggregationDevice}
-    fetch('/api/v1/get-aggregation-interfaces/', {        
-        method: 'POST',        
-        body: JSON.stringify(body),
-        headers: {
-            "X-CSRFToken": getCookie("csrftoken"),
-            "Accept": "application/json",
-            'Content-Type': 'application/json'
-          },
-        credentials: "same-origin"
-    }).then (response => {        
-        return response.json().then(data => {
-            aggregationPortSpinner.classList.add('d-none')
-            let aggregationPortsHTML = '';
-            
-            for (let i = 0; i < data['aggregation-ports'].length; i++ ) {
-                let port = data['aggregation-ports'][i];
-                aggregationPortsHTML = aggregationPortsHTML + `<option value="${port}" >${port}</option>\n`;
-            }
-            aggregationPortSelect.innerHTML = aggregationPortsHTML
-        
-        })        
-    })
+        let accessPortSelect = document.querySelector('select[name="access_access-port"]')
+        let uplinkPortSelect = document.querySelector('select[name="access_uplink-port"]') 
+        let aggregationPortSelect = document.querySelector('select[name="aggregation_access-interface"]')       
+        accessPortSelect.innerHTML = '';
+        uplinkPortSelect.innerHTML = '';
+        aggregationPortSelect.innerHTML = '';
+
+        let accessDevice = accessDeviceSelect.value
+        let aggregationDevice = aggregationDeviceSelect.value      
+        body = {"eds_switch": accessDevice, "acx_router": aggregationDevice}
+        fetch('/api/v1/get-all-interfaces/', {        
+            method: 'POST',        
+            body: JSON.stringify(body),
+            headers: {
+                "X-CSRFToken": getCookie("csrftoken"),
+                "Accept": "application/json",
+                'Content-Type': 'application/json'
+            },
+            credentials: "same-origin"
+            }).then (response => {        
+            return response.json().then(data => {
+                accessPortSpinner.classList.add('d-none')
+                uplinkPortSpinner.classList.add('d-none')
+                aggregationPortSpinner.classList.add('d-none')
+                let accessPortsHTML = '';            
+                for (let i = 0; i < data['access-ports'].length; i++ ) {
+                    let port = data['access-ports'][i];
+                    accessPortsHTML = accessPortsHTML + `<option value="${port}" >${port}</option>\n`;
+                }
+                accessPortSelect.innerHTML = accessPortsHTML
+
+                let uplinkPortsHTML = '';
+                for (let i = 0; i < data['uplink-ports'].length; i++ ) {
+                    let port = data['uplink-ports'][i];
+                    uplinkPortsHTML = uplinkPortsHTML + `<option value="${port}" >${port}</option>\n`;
+                }
+                uplinkPortSelect.innerHTML = uplinkPortsHTML
+
+                let aggregationPortsHTML = '';
+                for (let i = 0; i < data['aggregation-ports'].length; i++ ) {
+                    let port = data['aggregation-ports'][i];
+                    aggregationPortsHTML = aggregationPortsHTML + `<option value="${port}" >${port}</option>\n`;
+                }
+                aggregationPortSelect.innerHTML = aggregationPortsHTML
+
+                
+                })        
+            })
+    } else {
+        alert("please select the EDS switch")
+    }
 });

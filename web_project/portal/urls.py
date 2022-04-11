@@ -13,6 +13,7 @@ urlpatterns = [
     path('api/v1/query-ipv4-address/', views.api_query_ip),
     path('api/v1/get-access-interfaces/', views.api_get_access_interfaces),
     path('api/v1/get-aggregation-interfaces/', views.api_get_aggregation_interfaces),
+    path('api/v1/get-all-interfaces/', views.api_get_all_interfaces),
     path('details/<str:customer_name>/<int:vlan_number>', views.details, name='details'),
     path('error', views.error, name='error'),
 ]
