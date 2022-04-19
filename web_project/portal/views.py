@@ -317,7 +317,7 @@ def api_get_all_interfaces(request):
             if port_is_access(port_dict, vlan666_ports) == True:
                 json_response["access-ports"].append(port_dict["name"])
 
-        print('111111111111111')
+
         uplink_port = calculate_access_uplink(eds_ip, car_ip)
         json_response["uplink-ports"].append(uplink_port)
         downlink_port = calculate_agg_downlink(eds_ip, car_ip)
@@ -364,23 +364,21 @@ def netmask_to_cidr(netmask):
 
 
 def calculate_access_uplink(eds_ip, acx_ip):
+    print(eds_ip, acx_ip)
     startTime = time.time()
     child = paramiko.SSHClient()
     child.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    print("22222")
     child.connect(eds_ip, 22, 'autoeng', '}-75S^:j.mf@YJQm')
-    print("33333")
     stdin, stdout, stderr = child.exec_command(f'arp show intf remote')
-    print("4444")
     string = stdout.read().decode('ascii').strip("\n")    
     mac = re.search(f"\|\s+{acx_ip}\s+\|\s+(\w+:\w+:\w+:\w+:\w+:\w+)", string).group(1)
 
     stdin, stdout, stderr = child.exec_command(f'flow mac-addr show mac {mac}')
     string = stdout.read().decode('ascii').strip("\n")    
-    uplinlport=re.search(f"\|\s+{mac}\s\|\s+(.+?)\s+\|", string, re.IGNORECASE).group(1)
+    uplinkport=re.search(f"\|\s+{mac}\s\|\s+(.+?)\s+\|", string, re.IGNORECASE).group(1)
     execute_Time = time.time() - startTime
     print("Request completed in {0:.0f}s".format(execute_Time))
-    return uplinlport
+    return uplinkport
 
 
 def calculate_agg_downlink(eds_ip, acx_ip):
@@ -393,13 +391,12 @@ def calculate_agg_downlink(eds_ip, acx_ip):
     mac = re.search(f"(\w+:\w+:\w+:\w+:\w+:\w+)\s+{eds_ip}", string).group(1)
     print(mac)
 
-    child = paramiko.SSHClient()
-    child.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    child.connect('10.204.8.1', 22, 'autoeng', '}-75S^:j.mf@YJQm')
     stdin, stdout, stderr = child.exec_command(f'show arp | except em')
     string = stdout.read().decode('ascii').strip("\n")
-    outIntf = re.search(f"{mac}.+\s+\[*(\w+-\d+/\d+/\d+)", string)
+    outIntf = re.search(f"{mac}.+\s+\[*(\w+-\d+[\/]\d+[\/]\d+)", string)
     outIntfae = re.search(f"{mac}.+\s+\[*(ae\d+)", string)
+    print(outIntf)
+    print(outIntfae)
 
     if outIntf:
         downlink = outIntf.group(1)

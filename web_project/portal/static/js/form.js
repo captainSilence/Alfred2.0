@@ -142,8 +142,10 @@ function renderModal() {
 let confirmationModalSubmit = document.querySelector('#confirmation-modal-submit');
 confirmationModalSubmit.addEventListener('click', () => {
     
-    let confirmationModalSubmit = document.querySelector('#confirmation-modal-submit').disabled = true;
-    let confirmationModalCancel = document.querySelector('#confirmation-modal-cancel').disabled = true;
+    document.querySelector('#confirmation-modal-submit').disabled = true;
+    document.querySelector('#confirmation-modal-cancel').disabled = true;
+    document.querySelector('select[name="access_device-name"]').disabled = false;
+    document.querySelector('select[name="aggregation_device-name"]').disabled = false;
     debugger;
     let form = document.querySelector('#dia-form');
     form.submit();
@@ -265,6 +267,8 @@ accessDeviceSelect.addEventListener('change', () => {
         accessPortSpinner.classList.remove('d-none')
         uplinkPortSpinner.classList.remove('d-none')
         aggregationPortSpinner.classList.remove('d-none')
+        accessDeviceSelect.disabled = true
+        aggregationDeviceSelect.disabled = true
 
         let accessPortSelect = document.querySelector('select[name="access_access-port"]')
         let uplinkPortSelect = document.querySelector('select[name="access_uplink-port"]') 
@@ -328,6 +332,8 @@ aggregationDeviceSelect.addEventListener('change', () => {
         accessPortSpinner.classList.remove('d-none')
         uplinkPortSpinner.classList.remove('d-none')
         aggregationPortSpinner.classList.remove('d-none')
+        accessDeviceSelect.disabled = true
+        aggregationDeviceSelect.disabled = true
 
         let accessPortSelect = document.querySelector('select[name="access_access-port"]')
         let uplinkPortSelect = document.querySelector('select[name="access_uplink-port"]') 
@@ -337,7 +343,8 @@ aggregationDeviceSelect.addEventListener('change', () => {
         aggregationPortSelect.innerHTML = '';
 
         let accessDevice = accessDeviceSelect.value
-        let aggregationDevice = aggregationDeviceSelect.value      
+        let aggregationDevice = aggregationDeviceSelect.value
+
         body = {"eds_switch": accessDevice, "acx_router": aggregationDevice}
         fetch('/api/v1/get-all-interfaces/', {        
             method: 'POST',        
