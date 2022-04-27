@@ -15,13 +15,15 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-NSO_ADDRESS = "10.128.64.13:8080"
+NSO_ADDRESS = "http://10.128.64.13:8080"
 DATABASE_ADDRESS = "127.0.0.1"
 DATABASE_USER = "postgres"
 DATABASE_PASSWORD = "postgres123"
-NSO_USERNAME = "autoeng"
+NSO_USERNAME = "restUser"
 NSO_PASSWORD = "xt,xnDHk9t:qdQxm"
 SECRET_KEY = 'django-insecure-u9d-os77m5y07me@*l-idgj^(w!2d7d20+gvm#0qmdaup&+xd_'
+AD_USER = "autoeng"
+AD_PASSWORD = "}-75S^:j.mf@YJQm"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

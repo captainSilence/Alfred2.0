@@ -1,4 +1,5 @@
 from http.client import HTTPResponse
+from traceback import print_tb
 from django.shortcuts import redirect, render
 from django.http import HttpResponseRedirect, JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -47,11 +48,11 @@ def logout_request(request):
 @require_GET
 @login_required(login_url='/login')
 def form(request):
-    url = f'http://{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device-group=access/device-name'
+    url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device-group=access/device-name'
     headers = {"Content-Type": "application/yang-data+json"}
     response_access = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
 
-    url = f'http://{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device-group=aggregation/device-name'
+    url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device-group=aggregation/device-name'
     headers = {"Content-Type": "application/yang-data+json"}
     response_aggregation = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
     
@@ -67,7 +68,7 @@ def form(request):
 @login_required(login_url='/login')
 def table(request):
     # Query NSO for services
-    url = f'http://{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:services/diaSingleHome:diaSingleHome'
+    url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:services/diaSingleHome:diaSingleHome'
     headers = {"Content-Type": "application/yang-data+json"}
     response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
     params = {'data': []}
@@ -101,17 +102,27 @@ def table(request):
 def details(request, customer_name, vlan_number):
     headers = {"Content-Type": "application/yang-data+json"}
     # API Create diaChecks start mark
-    url = f'http://{settings.NSO_ADDRESS}/restconf/data/diaChecks:diaChecks'
+    url = f'{settings.NSO_ADDRESS}/restconf/data/diaChecks:diaChecks'
     checksData = {
             "customer-name": customer_name,
             "vlan-number": vlan_number,
             "start": True
-        }
+    }
     checks_response = requests.request('PATCH', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), data=json.dumps({"diaChecks:diaChecks":[checksData]}), verify=False)
     print('create-dia-checks entry', checks_response, file=sys.stderr)
 
+    # API to check the pre-check condition
+    # url = f'http://10.128.64.13:8080/restconf/data/diaChecks:diaChecks={customer_name},{vlan_number}/pre-checks'
+    # response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
+    # if response.status_code != 200:
+    #     # re-deploy the service
+    #     url = f'http://10.128.64.13:8080/restconf/data/tailf-ncs:services/diaSingleHome:diaSingleHome={customer_name},{vlan_number}/re-deploy'
+    #     response = requests.request('POST', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
+    #     print(response)
+    #     print(response.text)
+
     # API Query NSO for services
-    url = f'http://{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:services/diaSingleHome:diaSingleHome={customer_name},{vlan_number}'    
+    url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:services/diaSingleHome:diaSingleHome={customer_name},{vlan_number}'    
     service_response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
     try:
         response_json = json.loads(service_response.text.replace('-', '_'))
@@ -131,12 +142,19 @@ def details(request, customer_name, vlan_number):
 def submit(request):
     data = {}
     data['customer-name']= request.POST.get('customer_name')
-    data['vlan-number'] = request.POST.get('vlan_number')
+    # data['customer-name']= 'abc'
+    print(type(data['customer-name']))
+    data['vlan-number'] = int(request.POST.get('vlan_number'))
+    print(type(data['vlan-number']))
     data['aggregation'] = {}
     data['aggregation']['device-name'] = request.POST.get('aggregation_device-name')
+    print(type(data['aggregation']['device-name']))
     data['aggregation']['ipv4-address'] = request.POST.get('aggregation_ipv4-address')
+    print(type(data['aggregation']['ipv4-address']))
     data['aggregation']['cidr-mask'] = netmask_to_cidr(request.POST.get('aggregation_cidr-mask'))
+    print(type(data['aggregation']['cidr-mask']))
     data['aggregation']['access-interface'] = request.POST.get('aggregation_access-interface')
+    print(type(data['aggregation']['access-interface']))
     data['access'] = {}
     data['access']['device-name'] = request.POST.get('access_device-name')
     data['access']['access-port'] = request.POST.get('access_access-port')
@@ -155,11 +173,11 @@ def submit(request):
         # API to remove pre-existant diaChecks object
         customer_name = data['customer-name']
         vlan_number = data['vlan-number']
-        clean_url = f'http://{settings.NSO_ADDRESS}/restconf/data/diaChecks:diaChecks={customer_name},{vlan_number}'
+        clean_url = f'{settings.NSO_ADDRESS}/restconf/data/diaChecks:diaChecks={customer_name},{vlan_number}'
         requests.request('DELETE', clean_url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
 
         # API to create service instance
-        url = f'http://{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:services/diaSingleHome:diaSingleHome'
+        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:services/diaSingleHome:diaSingleHome'
         response = requests.request('PATCH', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), data=json.dumps({"diaSingleHome:diaSingleHome":[data]}), verify=False)
         if response.status_code != 204:
             request.session['error_message'] = response.text
@@ -237,14 +255,14 @@ def api_get_access_interfaces(request):
     vlan666_ports = []
     json_response = {"access-ports": [], "uplink-ports": []}
     if device != '':
-        url = f'http://{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={device}/config/tailf-ned-cienacli-acos:vlan/add/vlan=666'
+        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={device}/config/tailf-ned-cienacli-acos:vlan/add/vlan=666'
         headers = {"Content-Type": "application/yang-data+json"}
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth("autoeng", "xt,xnDHk9t:qdQxm"), verify=False).json()
+        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
         for port in response["tailf-ned-cienacli-acos:vlan"][0]['port']:
            vlan666_ports.append(port['id'])
 
 
-        url = f'http://{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={device}/config/tailf-ned-cienacli-acos:port/tailf-ned-cienacli-acos:set'
+        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={device}/config/tailf-ned-cienacli-acos:port/tailf-ned-cienacli-acos:set'
         headers = {"Content-Type": "application/yang-data+json"}
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
 
@@ -268,7 +286,7 @@ def api_get_aggregation_interfaces(request):
     device = data['device']
     json_response = {"aggregation-ports": []}
     if device != '':
-        url = f'http://{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={device}/config/junos:configuration/junos:interfaces'
+        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={device}/config/junos:configuration/junos:interfaces'
         headers = {"Content-Type": "application/yang-data+json"}
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()        
         for port_dict in response["junos:interfaces"]['interface']:
@@ -289,26 +307,26 @@ def api_get_all_interfaces(request):
     vlan666_ports = []
     json_response = {"access-ports": [], "uplink-ports": [], "aggregation-ports": []}
     if switch != '' and router != '':
-        url = f'http://{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/remote/set/ip'
+        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/remote/set/ip'
         headers = {"Content-Type": "application/yang-data+json"}
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth("autoeng", "xt,xnDHk9t:qdQxm"), verify=False)
+        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
         eds_ip = response.json()['tailf-ned-cienacli-acos:ip'].split('/')[0]
 
 
-        url = f'http://{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/set/gateway'
+        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/set/gateway'
         headers = {"Content-Type": "application/yang-data+json"}
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth("autoeng", "xt,xnDHk9t:qdQxm"), verify=False)
+        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
         car_ip = response.json()['tailf-ned-cienacli-acos:gateway']
 
 
-        url = f'http://{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:vlan/add/vlan=666'
+        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:vlan/add/vlan=666'
         headers = {"Content-Type": "application/yang-data+json"}
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth("autoeng", "xt,xnDHk9t:qdQxm"), verify=False).json()
+        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
         for port in response["tailf-ned-cienacli-acos:vlan"][0]['port']:
            vlan666_ports.append(port['id'])
 
 
-        url = f'http://{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:port/tailf-ned-cienacli-acos:set'
+        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:port/tailf-ned-cienacli-acos:set'
         headers = {"Content-Type": "application/yang-data+json"}
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
 
@@ -368,7 +386,7 @@ def calculate_access_uplink(eds_ip, acx_ip):
     startTime = time.time()
     child = paramiko.SSHClient()
     child.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    child.connect(eds_ip, 22, 'autoeng', '}-75S^:j.mf@YJQm')
+    child.connect(eds_ip, 22, settings.AD_USER, settings.AD_PASSWORD)
     stdin, stdout, stderr = child.exec_command(f'arp show intf remote')
     string = stdout.read().decode('ascii').strip("\n")    
     mac = re.search(f"\|\s+{acx_ip}\s+\|\s+(\w+:\w+:\w+:\w+:\w+:\w+)", string).group(1)
@@ -384,7 +402,7 @@ def calculate_access_uplink(eds_ip, acx_ip):
 def calculate_agg_downlink(eds_ip, acx_ip):
     child = paramiko.SSHClient()
     child.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    child.connect(acx_ip, 22, 'autoeng', '}-75S^:j.mf@YJQm')
+    child.connect(acx_ip, 22, settings.AD_USER, settings.AD_PASSWORD)
     stdin, stdout, stderr = child.exec_command(f'show arp no-resolve | match {eds_ip}')
     string = stdout.read().decode('ascii').strip("\n")
     # print(string)  

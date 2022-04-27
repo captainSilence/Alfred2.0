@@ -45,7 +45,7 @@
             <rename>
               <vlan>
                 <id>{$VLAN_NUMBER}</id>
-                <name>{$CUSTOMER_NAME}-DIA</name>
+                <name>DIA_{$CUSTOMER_NAME}</name>
               </vlan>
             </rename>
           </vlan>

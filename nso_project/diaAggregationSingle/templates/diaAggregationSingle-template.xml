@@ -31,7 +31,7 @@
           </interfaces>
           <vlans>
             <vlan>
-              <name>{$CUSTOMER_NAME}-INT</name>
+              <name>DIA_{$CUSTOMER_NAME}</name>
               <vlan-id>{$VLAN_NUMBER}</vlan-id>
               <interface>
                 <name>{$ACCESS_INTERFACE}.{$VLAN_NUMBER}</name>
