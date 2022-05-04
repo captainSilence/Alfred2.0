@@ -143,24 +143,25 @@ def submit(request):
     data = {}
     data['customer-name']= request.POST.get('customer_name')
     # data['customer-name']= 'abc'
-    print(type(data['customer-name']))
+    # print(type(data['customer-name']))
     data['vlan-number'] = int(request.POST.get('vlan_number'))
-    print(type(data['vlan-number']))
+    # print(type(data['vlan-number']))
     data['aggregation'] = {}
     data['aggregation']['device-name'] = request.POST.get('aggregation_device-name')
-    print(type(data['aggregation']['device-name']))
+    # print(type(data['aggregation']['device-name']))
     data['aggregation']['ipv4-address'] = request.POST.get('aggregation_ipv4-address')
-    print(type(data['aggregation']['ipv4-address']))
+    # print(type(data['aggregation']['ipv4-address']))
     data['aggregation']['cidr-mask'] = netmask_to_cidr(request.POST.get('aggregation_cidr-mask'))
-    print(type(data['aggregation']['cidr-mask']))
+    # print(type(data['aggregation']['cidr-mask']))
     data['aggregation']['access-interface'] = request.POST.get('aggregation_access-interface')
-    print(type(data['aggregation']['access-interface']))
+    # print(type(data['aggregation']['access-interface']))
     data['access'] = {}
     data['access']['device-name'] = request.POST.get('access_device-name')
     data['access']['access-port'] = request.POST.get('access_access-port')
     data['access']['uplink-port'] = request.POST.get('access_uplink-port')
 
-    print(data)
+    # print(data)
+    
     # summary = "Florida Circuit for testing."
     # description = "this is a test"
     # object = crq_ticket_class5.crq_ticket()
