@@ -35,16 +35,20 @@ database1 = 'SVCustom'
 username = 'na_proxy'
 password = '9tmoDRW4K24#%PEr'
 
+
 @require_GET
 @login_required(login_url='/login')
 def index(request):
     return render(request, 'index.html')
+
 
 @require_GET
 @login_required(login_url='/login')   
 def logout_request(request):
     logout(request)
     return render(request, 'login.html', {'loggout': 'Successfully Logged out'})
+
+
 @require_GET
 @login_required(login_url='/login')
 def form(request):
@@ -63,6 +67,7 @@ def form(request):
     except Exception as e:
         print('Error', e)
     return render(request, 'form.html', params)
+
 
 @require_GET
 @login_required(login_url='/login')
@@ -96,6 +101,32 @@ def table(request):
 
     
     return render(request, 'table.html', params )
+
+
+@require_GET
+@login_required(login_url='/login')
+def device_config(request, customer_name, vlan_number):
+    # api for rollback plan
+    # headers = {"Content-Type": "application/yang-data+json"}
+    # url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:services/diaSingleHome:diaSingleHome={customer_name},{vlan_number}?dryrun=native'
+    # response = requests.request('DELETE', url, headers=headers, auth=HTTPBasicAuth("autoeng", "xt,xnDHk9t:qdQxm"), verify=False)
+    # config = response.json()['dryrun-result']['native']['device']
+    # params = {'config': config, 'customer_name': customer_name, 'vlan_number': vlan_number}
+
+    headers = {"Content-Type": "application/yang-data+json"}
+    url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:services/diaSingleHome:diaSingleHome={customer_name},{vlan_number}/get-modifications'
+    response = requests.request('POST', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
+    data = response.json()["diaSingleHome:output"]["cli"]["local-node"]["data"]
+    router_config = removeSpace(data.split('device')[2].replace("{", "").replace("}", ""))
+    switch_config = removeSpace(data.split('device')[3].split('diaChecks')[0].replace("{", "").replace("}", ""))
+    config = {"aggregation": {"ACX Router": router_config}, "access": {"EDS Switch": switch_config}}
+    params = {'config': config, 'customer_name': customer_name, 'vlan_number': vlan_number}   
+    print(router_config)
+    removeSpace
+    print(switch_config)
+
+    return render(request, 'config.html', params)
+
 
 @require_GET
 @login_required(login_url='/login')
@@ -137,30 +168,23 @@ def details(request, customer_name, vlan_number):
     
     return render(request, 'details.html', params)
 
+
 @require_POST
 @login_required(login_url='/login')
 def submit(request):
     data = {}
     data['customer-name']= request.POST.get('customer_name')
-    # data['customer-name']= 'abc'
-    # print(type(data['customer-name']))
     data['vlan-number'] = int(request.POST.get('vlan_number'))
-    # print(type(data['vlan-number']))
     data['aggregation'] = {}
     data['aggregation']['device-name'] = request.POST.get('aggregation_device-name')
-    # print(type(data['aggregation']['device-name']))
     data['aggregation']['ipv4-address'] = request.POST.get('aggregation_ipv4-address')
-    # print(type(data['aggregation']['ipv4-address']))
     data['aggregation']['cidr-mask'] = netmask_to_cidr(request.POST.get('aggregation_cidr-mask'))
-    # print(type(data['aggregation']['cidr-mask']))
     data['aggregation']['access-interface'] = request.POST.get('aggregation_access-interface')
-    # print(type(data['aggregation']['access-interface']))
     data['access'] = {}
     data['access']['device-name'] = request.POST.get('access_device-name')
     data['access']['access-port'] = request.POST.get('access_access-port')
     data['access']['uplink-port'] = request.POST.get('access_uplink-port')
 
-    # print(data)
     
     # summary = "Florida Circuit for testing."
     # description = "this is a test"
@@ -196,9 +220,11 @@ def error(request):
     error_message = request.session['error_message']    
     return render(request, 'error.html', {'error_message': error_message})
 
+
 @require_GET
 def login_page(request):
     return render(request, 'login.html')
+
 
 @require_POST
 def login_request(request):
@@ -216,7 +242,8 @@ def login_request(request):
             response = HttpResponseRedirect(redirectUrl)
             return response
     return render(request, 'login.html', {'message': 'Authentication Failure'})
-                
+
+
 @require_POST
 @login_required(login_url='/login')
 @api_view(['POST'])
@@ -246,6 +273,7 @@ def api_query_ip(request):
     
     # response = {"ipv4-address": "10.239.45.1"}
     return JsonResponse(ipAddr)
+
 
 @require_POST
 @login_required(login_url='/login')
@@ -278,6 +306,7 @@ def api_get_access_interfaces(request):
         response = {}
         
     return JsonResponse(json_response)
+
 
 @require_POST
 @login_required(login_url='/login')
@@ -350,18 +379,20 @@ def api_get_all_interfaces(request):
 
 
 # Validate Ports
-
 def port_is_access(port_dict, vlan666_dict):
     if port_dict ["name"] in vlan666_dict:
         return True
     else:
         return False
 
+
 def port_is_uplink(port_dict):
     return True
 
+
 def port_is_aggregatrion(port_dict):
     return True
+
 
 def pyodbc_db_connection(server, database, username, password):
     cnxn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
@@ -424,3 +455,14 @@ def calculate_agg_downlink(eds_ip, acx_ip):
         downlink = outIntfae.group(1)
         print(downlink)
     return downlink
+
+
+def removeSpace(string_with_empty_lines):
+    lines = string_with_empty_lines.split("\n")
+    non_empty_lines = [line for line in lines if line.strip() != ""]
+
+    string_without_empty_lines = ""
+    for line in non_empty_lines:
+          string_without_empty_lines += line + "\n"
+
+    return string_without_empty_lines

@@ -152,7 +152,9 @@ function renderTable(arrayData) {
         <td>${data[key].switch}</td>\
         <td>${data[key].router}</td>\
         <td>${data[key].last_state}</td>\
-        <td><a href="/details/${data[key].customer_name}/${data[key].vlan_number}"><input type="button" class="btn btn-primary" value="Details"></a></td>`    
+        <td><a href="/details/${data[key].customer_name}/${data[key].vlan_number}"><input type="button" class="btn btn-primary" value="Details"></a></td>\
+        <td><a href="/config/${data[key].customer_name}/${data[key].vlan_number}"><input type="button" class="btn btn-primary" value="Configuation"></a></td>`
+            
         
         row.innerHTML = html
         tbody.appendChild(row)
