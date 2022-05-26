@@ -18,7 +18,7 @@
               <unit>
                 <name>{$VLAN_NUMBER}</name>
                 <apply-groups>IRB-Links</apply-groups>
-                <description>{$CUSTOMER_NAME}-INT</description>
+                <description>DIA_{$CUSTOMER_NAME}</description>
                 <family>
                   <inet>
                     <address>

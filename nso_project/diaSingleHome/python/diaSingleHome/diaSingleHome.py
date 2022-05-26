@@ -6,9 +6,17 @@ import socket
 from ncs.application import Service
 # from scripts.genie_conection import GenieConnection
 import uuid, os, re, json
+import psycopg2
 from . import crq_ticket_class
 
+# connect to PostgreSQL
+t_host = "10.128.64.11" # this will be either "localhost", a domain name, or an IP address.
+t_port = "5432" # default port for postgres server
+t_dbname = "postgres"
+t_user = "myprojectuser"
+t_pw = "password"
 pre_post_checks_key = r'!'
+
 
 class Start(ncs.application.NanoService):
     @ncs.application.NanoService.create
@@ -99,10 +107,25 @@ class UpdateExternal(ncs.application.NanoService):
     def cb_nano_create(self, tctx, root, service, plan, component, state, proplist, component_proplist):
         self.log.info("UpdateExternal:", state)
         self.log.info('IPv4 Address', service.aggregation.ipv4_address)
-        # summary = f"DIA Circuit provisioning for customer{service.customer_name} with vlan {service.vlan_number}."
-        # description = f"Customer account: {service.customer_name}, Vlan: {service.vlan_number}, ACX router: {service.aggregation.device_name}, EDS switch: {service.access.device_name}"
-        # object = crq_ticket_class.crq_ticket()
-        # object.cls_start(summary, description)
+        summary = f"DIA Circuit provisioning for customer{service.customer_name} with vlan {service.vlan_number}."
+        description = f"Customer account: {service.customer_name}, Vlan: {service.vlan_number}, ACX router: {service.aggregation.device_name}, EDS switch: {service.access.device_name}"
+        object = crq_ticket_class.crq_ticket()
+        object.cls_start(summary, description)
+        ticket_number = object.ticket_no
+
+        conn = psycopg2.connect(host=t_host, port=t_port, dbname=t_dbname, user=t_user, password=t_pw)
+        cur = conn.cursor()
+        # execute the INSERT statement
+        cur.execute("INSERT INTO dia (customer_acc_number, vlan, ticket_number) " +
+                    "VALUES(%s, %s, %s)",
+                    (service.customer_name, service.vlan_number, ticket_number))
+        # commit the changes to the database
+        conn.commit()
+        # close the communication with the PostgresQL database
+        cur.close()
+        conn.close()
+
+
 
 class PostChecks(ncs.application.NanoService):
     @ncs.application.NanoService.create

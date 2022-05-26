@@ -14,6 +14,7 @@ import time
 import pyodbc
 import paramiko
 import re
+import psycopg2
 # from . import crq_ticket_class5
 
 
@@ -89,6 +90,7 @@ def table(request):
             params_dict['switch'] = entry['access']['device-name']
             params_dict['router'] = entry['aggregation']['device-name']        
             params_dict['plan'] = []
+            params_dict['ticket'] = find_ticket_num(entry['customer-name'])
             # Change [0] to [1] to include init component
             for state in entry['plan']['component'][0]['state']:
                 params_dict['plan'].append(state)
@@ -414,7 +416,7 @@ def netmask_to_cidr(netmask):
 
 
 def calculate_access_uplink(eds_ip, acx_ip):
-    print(eds_ip, acx_ip)
+    # print(eds_ip, acx_ip)
     startTime = time.time()
     child = paramiko.SSHClient()
     child.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -439,14 +441,14 @@ def calculate_agg_downlink(eds_ip, acx_ip):
     string = stdout.read().decode('ascii').strip("\n")
     # print(string)  
     mac = re.search(f"(\w+:\w+:\w+:\w+:\w+:\w+)\s+{eds_ip}", string).group(1)
-    print(mac)
+    # print(mac)
 
     stdin, stdout, stderr = child.exec_command(f'show arp | except em')
     string = stdout.read().decode('ascii').strip("\n")
     outIntf = re.search(f"{mac}.+\s+\[*(\w+-\d+[\/]\d+[\/]\d+)", string)
     outIntfae = re.search(f"{mac}.+\s+\[*(ae\d+)", string)
-    print(outIntf)
-    print(outIntfae)
+    # print(outIntf)
+    # print(outIntfae)
 
     if outIntf:
         downlink = outIntf.group(1)
@@ -466,3 +468,18 @@ def removeSpace(string_with_empty_lines):
           string_without_empty_lines += line + "\n"
 
     return string_without_empty_lines
+
+
+def find_ticket_num(customer_acc):
+    conn = psycopg2.connect(dbname="postgres", user="myprojectuser", password="password", host="10.128.64.11")
+    cur = conn.cursor()
+    cur.execute(f"SELECT ticket_number FROM dia where customer_acc_number = '{customer_acc}';")
+    ticket_num = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if ticket_num == None:
+        return "No CRQ Found"
+    else:
+        return ticket_num[0]
+
