@@ -11,6 +11,7 @@ from requests.auth import HTTPBasicAuth
 from django.conf import settings
 import json, sys
 import time
+import datetime
 import pyodbc
 import paramiko
 import re
@@ -36,6 +37,13 @@ database1 = 'SVCustom'
 username = 'na_proxy'
 password = '9tmoDRW4K24#%PEr'
 
+# connect to PostgreSQL
+t_host = "10.128.64.11" # this will be either "localhost", a domain name, or an IP address.
+t_port = "5432" # default port for postgres server
+t_dbname = "postgres"
+t_user = "myprojectuser"
+t_pw = "password"
+pre_post_checks_key = r'!'
 
 @require_GET
 @login_required(login_url='/login')
@@ -186,8 +194,8 @@ def submit(request):
     data['access']['device-name'] = request.POST.get('access_device-name')
     data['access']['access-port'] = request.POST.get('access_access-port')
     data['access']['uplink-port'] = request.POST.get('access_uplink-port')
-
-    
+    user = request.user.username
+    time = datetime.datetime.now()
     # summary = "Florida Circuit for testing."
     # description = "this is a test"
     # object = crq_ticket_class5.crq_ticket()
@@ -212,6 +220,20 @@ def submit(request):
         
     except Exception as e:
         return redirect(f'/error/{e}')
+
+    # log the user activity into the DB
+    conn = psycopg2.connect(host=t_host, port=t_port, dbname=t_dbname, user=t_user, password=t_pw)
+    cur = conn.cursor()
+    # execute the INSERT statement
+    cur.execute("INSERT INTO user_session (customer_acc_number, vlan, user_name, time_service_created) " +
+                "VALUES(%s, %s, %s, %s)",
+                (data['customer-name'], data['vlan-number'], user, time))
+    # commit the changes to the database
+    conn.commit()
+    # close the communication with the PostgresQL database
+    cur.close()
+    conn.close()
+
 
     return redirect(f"/details/{data['customer-name']}/{data['vlan-number']}")
 
@@ -261,7 +283,9 @@ def api_query_ip(request):
         city = city.ServiceCity.lower().title()
 
     c1_productDB = pyodbc_db_connection(server, database, username, password)
-    ipPool = pyodbc_query(c1_productDB, '''select * from network_automation.dbo.UbrNetworks_copy where sysname = \'''' + city + "' and username is NULL")
+    ipPool = pyodbc_query(c1_productDB, '''select * from network_automation.dbo.UbrNetworks_copy where sysname = \'''' + city + '''' and username = \'''' + accountNumber + "' and ssu is null and macadd is null and wirelessActive is null")
+    if ipPool == []:
+        ipPool = pyodbc_query(c1_productDB, '''select * from network_automation.dbo.UbrNetworks_copy where sysname = \'''' + city + "' and username is NULL")
     for ip in ipPool:
         ip_address = ip.block.strip()
         subnet_mask = ip.mask.strip()
