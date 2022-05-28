@@ -8,14 +8,22 @@ from ncs.application import Service
 import uuid, os, re, json
 import psycopg2
 from . import crq_ticket_class
+import pyodbc
 
-# connect to PostgreSQL
+
+# connection to PostgreSQL
 t_host = "10.128.64.11" # this will be either "localhost", a domain name, or an IP address.
 t_port = "5432" # default port for postgres server
 t_dbname = "postgres"
 t_user = "myprojectuser"
 t_pw = "password"
 pre_post_checks_key = r'!'
+
+# connection to sql DB
+server = 'tcp:sql-product.corp.cableone.net'
+database = 'network_automation'
+username = 'na_proxy'
+password = '9tmoDRW4K24#%PEr'
 
 
 class Start(ncs.application.NanoService):
@@ -124,6 +132,13 @@ class UpdateExternal(ncs.application.NanoService):
         # close the communication with the PostgresQL database
         cur.close()
         conn.close()
+
+        # update the ip address DB
+        cnxn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
+        cursor = cnxn.cursor()
+        cursor.execute('''update network_automation.dbo.UbrNetworks_copy set username = \'''' + service.customer_name + '''', ssu = 'FIBER', macadd = 'FIBER' where block =\'''' + service.aggregation.ipv4_address + "'")
+        cnxn.commit()
+        cnxn.close()
 
 
 
