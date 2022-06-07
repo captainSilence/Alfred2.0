@@ -6,9 +6,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.http import require_POST, require_GET
 from rest_framework.decorators import api_view
-import requests
 from requests.auth import HTTPBasicAuth
 from django.conf import settings
+from collections import defaultdict
+import requests
 import json, sys
 import time
 import datetime
@@ -16,7 +17,8 @@ import pyodbc
 import paramiko
 import re
 import psycopg2
-# from . import crq_ticket_class5
+
+
 
 
 states = {
@@ -30,12 +32,16 @@ states = {
 
 
 server = 'tcp:sql-product.corp.cableone.net'
+# server = 'tcp:10.128.36.80'
+# database = 'CableOneInternet'
 # server1 = 'SQL-GOLDENGATE\GOLDENGATE'
 server1 = '10.128.35.118'
 database = 'network_automation'
 database1 = 'SVCustom'
-username = 'na_proxy'
-password = '9tmoDRW4K24#%PEr'
+username = 'internetReadWrite'
+password = 'j0hnnyb!@ze'
+username1 = 'na_proxy'
+password1 = '9tmoDRW4K24#%PEr'
 
 # connect to PostgreSQL
 t_host = "10.128.64.11" # this will be either "localhost", a domain name, or an IP address.
@@ -278,25 +284,31 @@ def api_query_ip(request):
     data = request.data
     accountNumber = data['customer-name']
     vlan_number = data['vlan-number']
-    ipAddr = {}
+    ipAddr = defaultdict(list)
 
-    c1_goldengateDB = pyodbc_db_connection(server1, database1, username, password)
-    address = pyodbc_query(c1_goldengateDB, '''select * from SVCustom.dbo.CustomerAddresses where SingleviewAccount = \'''' + accountNumber + "'")
+    c1_goldengateDB = pyodbc_db_connection(server1, database1, username1, password1)
+    address = pyodbc_query(c1_goldengateDB, '''select * from dbo.CustomerAddresses where SingleviewAccount = \'''' + accountNumber + "'")
     for city in address:
         city = city.ServiceCity.lower().title()
+        print(city)
 
-    c1_productDB = pyodbc_db_connection(server, database, username, password)
-    ipPool = pyodbc_query(c1_productDB, '''select * from network_automation.dbo.UbrNetworks_copy where sysname = \'''' + city + '''' and username = \'''' + accountNumber + "' and ssu is null and macadd is null and wirelessActive is null")
+    c1_productDB = pyodbc_db_connection(server, database, username1, password1)
+    # ipPool = pyodbc_query(c1_productDB, '''select * from network_automation.dbo.UbrNetworks_copy where sysname = \'''' + city + '''' and username = \'''' + accountNumber + "' and ssu is null and macadd is null and wirelessActive is null")
+    # if ipPool == []:
+    #     ipPool = pyodbc_query(c1_productDB, '''select * from network_automation.dbo.UbrNetworks_copy where sysname = \'''' + city + "' and username is NULL")
+
+    ipPool = pyodbc_query(c1_productDB, '''select * from dbo.UbrNetworks_copy where sysname = \'''' + city + '''' and username = \'''' + accountNumber + "' and ssu is null and macadd is null and wirelessActive is null")
     if ipPool == []:
-        ipPool = pyodbc_query(c1_productDB, '''select * from network_automation.dbo.UbrNetworks_copy where sysname = \'''' + city + "' and username is NULL")
+        ipPool = pyodbc_query(c1_productDB, '''select * from dbo.UbrNetworks_copy where sysname = \'''' + city + "' and username is NULL")
     for ip in ipPool:
         ip_address = ip.block.strip()
         subnet_mask = ip.mask.strip()
         # print(ip_address, subnet_mask)
         # ipAddr.append(ip_address)
-        ipAddr[ip_address] = subnet_mask
+        # ipAddr[ip_address] = subnet_mask
+        ipAddr[subnet_mask].append(ip_address)
     # customer_name and vlan_number    
-
+    print(ipAddr)
     # Replace Sleep with your code
     #time.sleep(3)
     
@@ -374,12 +386,12 @@ def api_get_all_interfaces(request):
 
     if switch != '' and router != '':
         # API to sync the devices
-        url = f'http://10.128.64.13:8080/restconf/data/tailf-ncs:devices/device={eds_switch}/sync-from'
-        response = requests.request('POST', url, headers=headers, auth=HTTPBasicAuth("autoeng", "xt,xnDHk9t:qdQxm"), verify=False)
+        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/sync-from'
+        response = requests.request('POST', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
         print(response.json())
 
-        url = f'http://10.128.64.13:8080/restconf/data/tailf-ncs:devices/device={car_router}/sync-from'
-        response = requests.request('POST', url, headers=headers, auth=HTTPBasicAuth("autoeng", "xt,xnDHk9t:qdQxm"), verify=False)
+        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/sync-from'
+        response = requests.request('POST', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
         print(response.json())
 
         url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/remote/set/ip'

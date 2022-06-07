@@ -123,37 +123,39 @@
                             </div>
 
                             <div class="input-group mb-3">
-                                <span class="input-group-text" id="inputGroup-sizing-sm">IPv4 Address</span>
+                                <span class="input-group-text" id="inputGroup-sizing-sm">CIDR Mask</span>
                                 <!-- <label class="form-check-label" for="flexCheckDefault">IPv4 Address</label> -->
                                 <!-- <input name="aggregation_ipv4-address" class="form-control"  aria-describedby="inputGroup-sizing-sm" placeholder="10.0.0.1" readonly/> -->
-                                <select name="aggregation_ipv4-address" class="form-select" aria-label="Default select example" disabled>
-                                  <option value="" disabled selected hidden >Please check the reserve IP box and select an IP</option>
+                                <select name="aggregation_cidr-mask" class="form-select" aria-label="Default select example" disabled>
+                                  <option value="" disabled selected hidden >Please check the reserve IP box and select an Subnet Mask first</option>
                                 </select>
                                 <div class="d-flex">
                                     <div id="ipv4-spinner" class="spinner-border d-none" role="status"></div>
                                 </div>
                             </div>                              
-                              <div class="input-group mb-3">
-                                <!-- <label class="form-check-label" for="flexCheckDefault">CIDR Mask</label> -->
-                                <span class="input-group-text" id="inputGroup-sizing-sm">CIDR Mask</span>
-                                <input type="text" name="aggregation_cidr-mask" id="inputGroup-sizing-sm" class="form-control" placeholder="Select an IP address first" readonly>
-                                <!-- <select name="aggregation_cidr-mask" class="form-select" aria-label="Default select example">                                     -->
-                                    <!-- <option value="" ></option>
-                                    <option value="29" >29</option>
-                                    <option value="27" >27</option>
-                                    <option value="26" >26</option>
-                                    <option value="24" >24</option>                                    
-                                  </select> -->
-                              </div>    
-                              <div class="input-group mb-3">
-                                <span class="input-group-text" id="inputGroup-sizing-sm">Downlink Port</span>                                
-                                <select name="aggregation_access-interface" class="form-select" >                                                                     
+                            <div class="input-group mb-3">
+                              <!-- <label class="form-check-label" for="flexCheckDefault">CIDR Mask</label> -->
+                              <span class="input-group-text" id="inputGroup-sizing-sm">IPv4 Address</span>
+                              <!-- <input type="text" name="aggregation_cidr-mask" id="inputGroup-sizing-sm" class="form-control" placeholder="Select an IP address first" readonly> -->
+                              <select name="aggregation_ipv4-address" class="form-select" aria-label="Default select example">                                    
+                                  <!-- <option value="" ></option>
+                                  <option value="29" >29</option>
+                                  <option value="27" >27</option>
+                                  <option value="26" >26</option>
+                                  <option value="24" >24</option>                                     -->
                                 </select>
-                                <div class="d-flex">
-                                    <div id="aggregation-port-spinner" class="spinner-border d-none" role="status"></div>
-                                </div> 
+                            </div>
+                            
+                            
+                            <div class="input-group mb-3">
+                              <span class="input-group-text" id="inputGroup-sizing-sm">Downlink Port</span>                                
+                              <select name="aggregation_access-interface" class="form-select" >                                                                     
+                              </select>
+                              <div class="d-flex">
+                                  <div id="aggregation-port-spinner" class="spinner-border d-none" role="status"></div>
+                              </div> 
 
-                              </div>    
+                            </div>    
                         </div>
                     </div>
                 </div>  
