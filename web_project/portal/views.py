@@ -280,6 +280,30 @@ def login_request(request):
 @require_POST
 @login_required(login_url='/login')
 @api_view(['POST'])
+def api_query_customer_address(request):
+    data = request.data
+    accountNumber = data['customer-name']
+    customerInfo = {"customerDetail": ""}
+
+    c1_goldengateDB = pyodbc_db_connection(server1, database1, username1, password1)
+    address = pyodbc_query(c1_goldengateDB, '''select NAME, ServiceStreetAddress1, ServiceCity, ServiceState
+                                                from SVCustom.dbo.CustomerAddresses a
+                                                inner join singleview.[dbo].[CUST_ACCT_PE_V] b on a.SingleviewAccount = b.[Primary Account Number]
+                                                where SingleviewAccount = \'''' + accountNumber + "'")
+    for line in address:
+        name = line.NAME.strip().split(":")[1]
+        streetAddress = line.ServiceStreetAddress1.lower().title()
+        city = line.ServiceCity.lower().title()
+        state = line.ServiceState
+        customerInfo["customerDetail"] = f"Customer: {name}    Address: {streetAddress}, {city}, {state}"
+        print(customerInfo)
+
+    return JsonResponse(customerInfo)
+
+
+@require_POST
+@login_required(login_url='/login')
+@api_view(['POST'])
 def api_query_ip(request):
     data = request.data
     accountNumber = data['customer-name']
@@ -288,9 +312,8 @@ def api_query_ip(request):
 
     c1_goldengateDB = pyodbc_db_connection(server1, database1, username1, password1)
     address = pyodbc_query(c1_goldengateDB, '''select * from dbo.CustomerAddresses where SingleviewAccount = \'''' + accountNumber + "'")
-    for city in address:
-        city = city.ServiceCity.lower().title()
-        print(city)
+    for line in address:
+        city = line.ServiceCity.lower().title()
 
     c1_productDB = pyodbc_db_connection(server, database, username1, password1)
     # ipPool = pyodbc_query(c1_productDB, '''select * from network_automation.dbo.UbrNetworks_copy where sysname = \'''' + city + '''' and username = \'''' + accountNumber + "' and ssu is null and macadd is null and wirelessActive is null")
@@ -303,16 +326,8 @@ def api_query_ip(request):
     for ip in ipPool:
         ip_address = ip.block.strip()
         subnet_mask = ip.mask.strip()
-        # print(ip_address, subnet_mask)
-        # ipAddr.append(ip_address)
-        # ipAddr[ip_address] = subnet_mask
         ipAddr[subnet_mask].append(ip_address)
-    # customer_name and vlan_number    
-    print(ipAddr)
-    # Replace Sleep with your code
-    #time.sleep(3)
     
-    # response = {"ipv4-address": "10.239.45.1"}
     return JsonResponse(ipAddr)
 
 

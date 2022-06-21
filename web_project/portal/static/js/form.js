@@ -11,6 +11,7 @@ const formFieldsDict = {
 }
 
 let ipAddrAndMask = {}
+let customerAddress = {}
 
 function getCookie(name) {
     var cookieValue = null;
@@ -160,6 +161,7 @@ clearButton.addEventListener('click', () => {
     let customerInput = document.querySelector('input[name="customer_name"]')
     let vlanInput = document.querySelector('input[name="vlan_number"]')
     let checkBox = document.querySelector('input[name="reserve_ip"]')
+    let address = document.getElementById('customer_address')
     document.querySelectorAll('select[name="aggregation_ipv4-address"] option').forEach(o => o.remove())
     document.querySelectorAll('select[name="aggregation_cidr-mask"] option').forEach(o => o.remove())
     document.querySelectorAll('select[name="aggregation_access-interface"] option').forEach(o => o.remove())
@@ -168,8 +170,40 @@ clearButton.addEventListener('click', () => {
     checkBox.removeAttribute('disabled', 'disabled')
     customerInput.removeAttribute('readonly', 'readonly')
     vlanInput.removeAttribute('readonly', 'readonly')
+    address.innerHTML = ""
+    address.hidden = true
     
 })
+
+
+// Query customer Address
+function queryCustomerAddress(){  
+    let customerInput = document.querySelector('input[name="customer_name"]')
+    let vlanInput = document.querySelector('input[name="vlan_number"]')
+    let body = {"customer-name": customerInput.value, "vlan-number": vlanInput.value}
+
+    return fetch('/api/v1/query-customer-address/', {        
+        method: 'POST',
+        body: JSON.stringify(body),
+        headers: {
+            "X-CSRFToken": getCookie("csrftoken"),
+            "Accept": "application/json",
+            'Content-Type': 'application/json'
+          },
+        credentials: "same-origin"
+    }).then (response => {
+        
+        return response.json().then(data => {
+            customerAddress = data;
+            console.log(customerAddress)
+            console.log(customerAddress["customerDetail"])
+            let address = document.getElementById('customer_address')
+            address.removeAttribute("hidden")
+            address.innerHTML = customerAddress["customerDetail"]
+        })        
+    })        
+}
+
 
 // Query IPv4 Address
 function queryIpv4Address(){  
@@ -209,8 +243,10 @@ function queryIpv4Address(){
 
 // Update the ip according to the subnet mask user selected
 document.addEventListener('DOMContentLoaded', function(){
-    let CIDRMask = document.querySelector('select[name="aggregation_cidr-mask"]')
-    let IPv4Addr = document.querySelector('select[name="aggregation_ipv4-address"]')
+    let element = document.getElementById('navBarForm');
+    element.classList.add('active');
+    let CIDRMask = document.querySelector('select[name="aggregation_cidr-mask"]');
+    let IPv4Addr = document.querySelector('select[name="aggregation_ipv4-address"]');
     CIDRMask.onchange = function(){
         document.querySelectorAll('select[name="aggregation_ipv4-address"] option').forEach(o => o.remove())
         const selectedIP = CIDRMask.options[CIDRMask.selectedIndex].text
@@ -250,6 +286,7 @@ checkBox.addEventListener('change', () => {
         customerInput.setAttribute('readonly', 'readonly')
         vlanInput.setAttribute('readonly', 'readonly')
         queryIpv4Address()
+        queryCustomerAddress()
     } 
 })
 

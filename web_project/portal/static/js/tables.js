@@ -163,4 +163,9 @@ function renderTable(arrayData) {
     }
 }
 
+document.addEventListener('DOMContentLoaded', function(){
+    let element = document.getElementById('navBarTable');
+    element.classList.add('active');
+})
+
 

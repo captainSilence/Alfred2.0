@@ -72,7 +72,7 @@
                     </a>
                     <ul class="nav nav-pills nav-flush flex-column mb-auto text-center">
                         <li class="nav-item">
-                            <a href="/" class="nav-link active py-3 border-bottom" aria-current="page" title="" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Home">
+                            <a href="/" id="navBarHome" class="nav-link py-3 border-bottom" aria-current="page" title="" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Home">
                               <svg class="bi" width="24" height="24" role="img" aria-label="Home"><use xlink:href="#home"></use></svg>
                             </a>
                         </li>
@@ -83,12 +83,12 @@
                         </li> -->
     
                       <li class="nav-item">
-                        <a href="{% url 'form' %}" class="nav-link py-3 border-bottom" aria-current="page" title="" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Form">
+                        <a href="{% url 'form' %}" id="navBarForm" class="nav-link py-3 border-bottom" aria-current="page" title="" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Form">
                           <svg class="bi" width="24" height="24" role="img" aria-label="Form"><use xlink:href="#receipt"></use></svg>
                         </a>
                       </li>
-                      <li>
-                        <a href="{% url 'table' %}" class="nav-link py-3 border-bottom" title="" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Services">
+                      <li class="nav-item">
+                        <a href="{% url 'table' %}" id="navBarTable" class="nav-link py-3 border-bottom" title="" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Services">
                           <svg class="bi" width="24" height="24" role="img" aria-label="Services"><use xlink:href="#table"></use></svg>
                         </a>
                       </li>

@@ -11,6 +11,7 @@ urlpatterns = [
     path('logout', views.logout_request, name='logout'),
     path('api/v1/submit', views.submit),
     path('api/v1/query-ipv4-address/', views.api_query_ip),
+    path('api/v1/query-customer-address/', views.api_query_customer_address),
     path('api/v1/get-access-interfaces/', views.api_get_access_interfaces),
     path('api/v1/get-aggregation-interfaces/', views.api_get_aggregation_interfaces),
     path('api/v1/get-all-interfaces/', views.api_get_all_interfaces),

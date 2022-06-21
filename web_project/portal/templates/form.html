@@ -5,6 +5,8 @@
 <style>
   select[name='aggregation_ipv4-address'] { font-size: 20; }
   input[name='aggregation_cidr-mask'] { font-size: 14px; }
+  /* li[name='navBarForm'] { color: red} */
+  /* #navBarForm { background-color: red} */
 </style>
 <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -40,9 +42,12 @@
                     </div>
                     <div class="card">
                         <div class="card-body">
-                                <div class="input-group mb-3">
+                                  <div class="input-group mb-3">
                                     <span class="input-group-text" id="inputGroup-sizing-sm">Customer Acc</span>
                                     <input name="customer_name" type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                                  </div>
+                                  <div>
+                                    <span id = "customer_address" hidden style="white-space: pre"></span>
                                   </div>
                                   <div class="input-group mb-3">
                                     <span class="input-group-text" id="inputGroup-sizing-sm">Vlan</span>
@@ -179,6 +184,6 @@
           </form>
 
 
-<script src="/static/js/form.js"></script>   
+<script src="/static/js/form.js"></script>
 
 {% endblock %}
