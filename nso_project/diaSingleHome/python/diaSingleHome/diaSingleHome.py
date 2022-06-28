@@ -20,10 +20,16 @@ t_pw = "password"
 pre_post_checks_key = r'!'
 
 # connection to sql DB
-server = 'tcp:sql-product.corp.cableone.net'
-database = 'network_automation'
-username = 'na_proxy'
-password = '9tmoDRW4K24#%PEr'
+# server = 'tcp:sql-product.corp.cableone.net'
+# database = 'network_automation'
+# username = 'na_proxy'
+# password = '9tmoDRW4K24#%PEr'
+
+# SQL-ProductPub.corp.cableone.net
+server = '10.128.36.80'
+database = 'CableOneInternet'
+username = 'internetReadWrite'
+password = 'j0hnnyb!@ze'
 
 
 class Start(ncs.application.NanoService):
@@ -136,7 +142,7 @@ class UpdateExternal(ncs.application.NanoService):
         # update the ip address DB
         cnxn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
         cursor = cnxn.cursor()
-        cursor.execute('''update network_automation.dbo.UbrNetworks_copy set username = \'''' + service.customer_name + '''', ssu = 'FIBER', macadd = 'FIBER' where block =\'''' + service.aggregation.ipv4_address + "'")
+        cursor.execute('''update dbo.UbrNetworks set username = \'''' + service.customer_name + '''', ssu = 'FIBER', macadd = 'FIBER' where block =\'''' + service.aggregation.ipv4_address + "'")
         cnxn.commit()
         cnxn.close()
 

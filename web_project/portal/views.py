@@ -31,12 +31,13 @@ states = {
 }
 
 
-server = 'tcp:sql-product.corp.cableone.net'
-# server = 'tcp:10.128.36.80'
-# database = 'CableOneInternet'
+# server = 'tcp:sql-product.corp.cableone.net'
+# SQL-ProductPub.corp.cableone.net
+server = '10.128.36.80'
+database = 'CableOneInternet'
 # server1 = 'SQL-GOLDENGATE\GOLDENGATE'
 server1 = '10.128.35.118'
-database = 'network_automation'
+# database = 'network_automation'
 database1 = 'SVCustom'
 username = 'internetReadWrite'
 password = 'j0hnnyb!@ze'
@@ -295,7 +296,7 @@ def api_query_customer_address(request):
         streetAddress = line.ServiceStreetAddress1.lower().title()
         city = line.ServiceCity.lower().title()
         state = line.ServiceState
-        customerInfo["customerDetail"] = f"Customer: {name}    Address: {streetAddress}, {city}, {state}"
+        customerInfo["customerDetail"] = f"Customer Name: {name}    Address: {streetAddress}, {city}, {state}"
         print(customerInfo)
 
     return JsonResponse(customerInfo)
@@ -315,14 +316,14 @@ def api_query_ip(request):
     for line in address:
         city = line.ServiceCity.lower().title()
 
-    c1_productDB = pyodbc_db_connection(server, database, username1, password1)
+    c1_productDB = pyodbc_db_connection(server, database, username, password)
     # ipPool = pyodbc_query(c1_productDB, '''select * from network_automation.dbo.UbrNetworks_copy where sysname = \'''' + city + '''' and username = \'''' + accountNumber + "' and ssu is null and macadd is null and wirelessActive is null")
     # if ipPool == []:
     #     ipPool = pyodbc_query(c1_productDB, '''select * from network_automation.dbo.UbrNetworks_copy where sysname = \'''' + city + "' and username is NULL")
 
-    ipPool = pyodbc_query(c1_productDB, '''select * from dbo.UbrNetworks_copy where sysname = \'''' + city + '''' and username = \'''' + accountNumber + "' and ssu is null and macadd is null and wirelessActive is null")
+    ipPool = pyodbc_query(c1_productDB, '''select * from dbo.UbrNetworks where sysname = \'''' + city + '''' and username = \'''' + accountNumber + "' and ssu is null and macadd is null and wirelessActive is null")
     if ipPool == []:
-        ipPool = pyodbc_query(c1_productDB, '''select * from dbo.UbrNetworks_copy where sysname = \'''' + city + "' and username is NULL")
+        ipPool = pyodbc_query(c1_productDB, '''select * from dbo.UbrNetworks where sysname = \'''' + city + "' and username is NULL")
     for ip in ipPool:
         ip_address = ip.block.strip()
         subnet_mask = ip.mask.strip()
