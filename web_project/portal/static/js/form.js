@@ -205,13 +205,40 @@ function queryCustomerAddress(){
 }
 
 
+// Query customer Sysname
+function querySysname(){
+    return fetch('/api/v1/get-all-sysname/', {        
+        method: 'GET',
+        headers: {
+            "X-CSRFToken": getCookie("csrftoken"),
+            "Accept": "application/json",
+            'Content-Type': 'application/json'
+          },
+        credentials: "same-origin"
+    }).then (response => {
+        
+        return response.json().then(data => {
+            customerSysname = data["city"];
+            console.log(customerSysname);
+            let sysname = document.querySelector('select[name="sysname"]');
+            for (let index in customerSysname){
+                const singleIP = document.createElement('option');
+                singleIP.innerHTML = customerSysname[index];
+                sysname.add(singleIP);
+            }
+        })        
+    })        
+}
+
+
 // Query IPv4 Address
 function queryIpv4Address(){  
     let ipv4Spinner = document.querySelector('#ipv4-spinner');
     ipv4Spinner.className = 'spinner-border'
     let customerInput = document.querySelector('input[name="customer_name"]')
     let vlanInput = document.querySelector('input[name="vlan_number"]')
-    let body = {"customer-name": customerInput.value, "vlan-number": vlanInput.value}
+    let sysname = document.querySelector('select[name="sysname"]')
+    let body = {"customer-name": customerInput.value, "vlan-number": vlanInput.value, "sysname": sysname.value}
     document.querySelector('select[name="aggregation_cidr-mask"]').disabled = false;
     return fetch('/api/v1/query-ipv4-address/', {        
         method: 'POST',
@@ -229,7 +256,7 @@ function queryIpv4Address(){
             let ipMask = document.querySelector('select[name="aggregation_cidr-mask"]');
 
             for (let key in ipAddrAndMask){
-                console.log(key)
+                // console.log(key)
                 const singleIP = document.createElement('option');
                 singleIP.innerHTML = key;
                 ipMask.add(singleIP);
@@ -242,24 +269,25 @@ function queryIpv4Address(){
 }
 
 // Update the ip according to the subnet mask user selected
-document.addEventListener('DOMContentLoaded', function(){
+let CIDRMask = document.querySelector('select[name="aggregation_cidr-mask"]');
+let IPv4Addr = document.querySelector('select[name="aggregation_ipv4-address"]');
+CIDRMask.addEventListener('change', () => {
     let element = document.getElementById('navBarForm');
     element.classList.add('active');
-    let CIDRMask = document.querySelector('select[name="aggregation_cidr-mask"]');
-    let IPv4Addr = document.querySelector('select[name="aggregation_ipv4-address"]');
-    CIDRMask.onchange = function(){
-        document.querySelectorAll('select[name="aggregation_ipv4-address"] option').forEach(o => o.remove())
-        const selectedIP = CIDRMask.options[CIDRMask.selectedIndex].text
-        console.log(ipAddrAndMask)
-        for (let i in ipAddrAndMask[selectedIP]){
-            const singleIP = document.createElement('option');
-            singleIP.innerHTML = ipAddrAndMask[selectedIP][i];
-            IPv4Addr.add(singleIP)
-        }
-        // CIDRMask.value = ipAddrAndMask[selectedIP]
-
+    document.querySelectorAll('select[name="aggregation_ipv4-address"] option').forEach(o => o.remove())
+    const selectedIP = CIDRMask.options[CIDRMask.selectedIndex].text
+    console.log(ipAddrAndMask)
+    for (let i in ipAddrAndMask[selectedIP]){
+        const singleIP = document.createElement('option');
+        singleIP.innerHTML = ipAddrAndMask[selectedIP][i];
+        IPv4Addr.add(singleIP)
     }
+    // CIDRMask.value = ipAddrAndMask[selectedIP]
 })
+
+
+// load all sysname
+document.addEventListener('DOMContentLoaded', querySysname())
 
 // Detect Reserv IP Address Button
 let checkBox = document.querySelector('input[name="reserve_ip"]')
