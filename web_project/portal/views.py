@@ -516,7 +516,7 @@ def netmask_to_cidr(netmask):
 
 
 def calculate_access_uplink(eds_ip, acx_ip):
-    # print(eds_ip, acx_ip)
+    print(eds_ip, acx_ip)
     startTime = time.time()
     child = paramiko.SSHClient()
     child.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -534,6 +534,7 @@ def calculate_access_uplink(eds_ip, acx_ip):
 
 
 def calculate_agg_downlink(eds_ip, acx_ip):
+    print(eds_ip, acx_ip)
     child = paramiko.SSHClient()
     child.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     child.connect(acx_ip, 22, settings.AD_USER, settings.AD_PASSWORD)

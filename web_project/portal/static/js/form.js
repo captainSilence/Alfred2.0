@@ -272,8 +272,8 @@ function queryIpv4Address(){
 let CIDRMask = document.querySelector('select[name="aggregation_cidr-mask"]');
 let IPv4Addr = document.querySelector('select[name="aggregation_ipv4-address"]');
 CIDRMask.addEventListener('change', () => {
-    let element = document.getElementById('navBarForm');
-    element.classList.add('active');
+    // let element = document.getElementById('navBarForm');
+    // element.classList.add('active');
     document.querySelectorAll('select[name="aggregation_ipv4-address"] option').forEach(o => o.remove())
     const selectedIP = CIDRMask.options[CIDRMask.selectedIndex].text
     console.log(ipAddrAndMask)
@@ -287,7 +287,12 @@ CIDRMask.addEventListener('change', () => {
 
 
 // load all sysname
-document.addEventListener('DOMContentLoaded', querySysname())
+document.addEventListener('DOMContentLoaded', function(){
+    querySysname()
+    let element = document.getElementById('navBarForm');
+    element.classList.add('active');
+})
+// document.addEventListener('DOMContentLoaded', querySysname())
 
 // Detect Reserv IP Address Button
 let checkBox = document.querySelector('input[name="reserve_ip"]')
