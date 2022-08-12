@@ -148,6 +148,7 @@ function renderTable(arrayData) {
         html = `\
         <td>${data[key].id}</td>\
         <td>${data[key].customer_name}</td>\
+        <td>${data[key].customer_acc}</td>\
         <td>${data[key].vlan_number}</td>\
         <td>${data[key].switch}</td>\
         <td>${data[key].router}</td>\

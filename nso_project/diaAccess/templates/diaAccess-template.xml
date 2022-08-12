@@ -45,11 +45,16 @@
             <rename>
               <vlan>
                 <id>{$VLAN_NUMBER}</id>
-                <name>DIA_{$CUSTOMER_NAME}</name>
+                <name>{$CUSTOMER_NAME}_DIA</name>
               </vlan>
             </rename>
           </vlan>
           <port xmlns="http://tail-f.com/ned/cienacli-acos">
+            <disable>
+              <port tags="delete">
+                <name>{$ACCESS_PORT}</name>
+              </port>
+            </disable>
             <set>
               <port>
                 <name>{$ACCESS_PORT}</name>

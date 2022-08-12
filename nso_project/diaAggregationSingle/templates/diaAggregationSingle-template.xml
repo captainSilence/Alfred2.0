@@ -18,7 +18,7 @@
               <unit>
                 <name>{$VLAN_NUMBER}</name>
                 <apply-groups>IRB-Links</apply-groups>
-                <description>DIA_{$CUSTOMER_NAME}</description>
+                <description>{$CUSTOMER_NAME}_DIA</description>
                 <family>
                   <inet>
                     <address>
@@ -31,7 +31,7 @@
           </interfaces>
           <vlans>
             <vlan>
-              <name>DIA_{$CUSTOMER_NAME}</name>
+              <name>{$CUSTOMER_NAME}_DIA</name>
               <vlan-id>{$VLAN_NUMBER}</vlan-id>
               <interface>
                 <name>{$ACCESS_INTERFACE}.{$VLAN_NUMBER}</name>

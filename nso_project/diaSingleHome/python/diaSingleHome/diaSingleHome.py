@@ -130,16 +130,14 @@ class UpdateExternal(ncs.application.NanoService):
         conn = psycopg2.connect(host=t_host, port=t_port, dbname=t_dbname, user=t_user, password=t_pw)
         cur = conn.cursor()
         # execute the INSERT statement
-        cur.execute("INSERT INTO dia (customer_acc_number, vlan, ticket_number) " +
-                    "VALUES(%s, %s, %s)",
-                    (service.customer_name, service.vlan_number, ticket_number))
+        cur.execute("update dia_test set ticket_number = %s where customer_name = %s and vlan = %s",(ticket_number, service.customer_name, service.vlan_number))
         # commit the changes to the database
         conn.commit()
         # close the communication with the PostgresQL database
         cur.close()
         conn.close()
 
-        # update the ip address DB
+        # update the ubrNetworks DB
         cnxn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
         cursor = cnxn.cursor()
         cursor.execute('''update dbo.UbrNetworks set username = \'''' + service.customer_name + '''', ssu = 'FIBER', macadd = 'FIBER' where block =\'''' + service.aggregation.ipv4_address + "'")

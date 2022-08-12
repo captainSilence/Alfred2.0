@@ -106,6 +106,9 @@ def table(request):
             params_dict['router'] = entry['aggregation']['device-name']        
             params_dict['plan'] = []
             params_dict['ticket'] = find_ticket_num(entry['customer-name'], entry['vlan-number'])
+            # print(params_dict['ticket'])
+            params_dict['customer_acc'] = get_acc_number_by_name(entry['customer-name'], entry['vlan-number'])
+            # print(params_dict['customer_acc'])
             # Change [0] to [1] to include init component
             for state in entry['plan']['component'][0]['state']:
                 params_dict['plan'].append(state)
@@ -116,7 +119,7 @@ def table(request):
         print('Error', e, file=sys.stderr)
 
 
-    
+    print(params)
     return render(request, 'table.html', params )
 
 
@@ -189,8 +192,9 @@ def details(request, customer_name, vlan_number):
 @require_POST
 @login_required(login_url='/login')
 def submit(request):
+    customer_acc = request.POST.get('customer_name')
     data = {}
-    data['customer-name']= request.POST.get('customer_name')
+    data['customer-name']= get_cust_name(customer_acc)
     data['vlan-number'] = int(request.POST.get('vlan_number'))
     data['aggregation'] = {}
     data['aggregation']['device-name'] = request.POST.get('aggregation_device-name')
@@ -235,9 +239,9 @@ def submit(request):
     conn = psycopg2.connect(host=t_host, port=t_port, dbname=t_dbname, user=t_user, password=t_pw)
     cur = conn.cursor()
     # execute the INSERT statement
-    cur.execute("INSERT INTO user_session (customer_acc_number, vlan, user_name, time_service_created) " +
-                "VALUES(%s, %s, %s, %s)",
-                (customer_name, vlan_number, user, time))
+    cur.execute("INSERT INTO user_session (customer_acc_number, vlan, user_name, time_service_created) VALUES (%s, %s, %s, %s)", (customer_acc, vlan_number, user, time))
+
+    cur.execute("INSERT INTO dia_test (customer_acc_number, customer_name, vlan, ticket_number) VALUES (%s, %s, %s, %s)",(customer_acc, customer_name, vlan_number, "NULL"))
     # commit the changes to the database
     conn.commit()
     # close the communication with the PostgresQL database
@@ -283,7 +287,7 @@ def login_request(request):
 @api_view(['POST'])
 def api_query_customer_address(request):
     data = request.data
-    accountNumber = data['customer-name']
+    accountNumber = data['customer-acc']
     customerInfo = {"customerDetail": ""}
 
     c1_goldengateDB = pyodbc_db_connection(server1, database1, username1, password1)
@@ -571,10 +575,10 @@ def removeSpace(string_with_empty_lines):
     return string_without_empty_lines
 
 
-def find_ticket_num(customer_acc, vlan):
-    conn = psycopg2.connect(dbname="postgres", user="myprojectuser", password="password", host="10.128.64.11")
+def find_ticket_num(customer_name, vlan):
+    conn = psycopg2.connect(host=t_host, port=t_port, dbname=t_dbname, user=t_user, password=t_pw)
     cur = conn.cursor()
-    cur.execute(f"SELECT ticket_number FROM dia where customer_acc_number = '{customer_acc}' and vlan = {vlan};")
+    cur.execute(f"SELECT ticket_number FROM dia_test where customer_name = '{customer_name}' and vlan = {vlan};")
     ticket_num = cur.fetchone()
     cur.close()
     conn.close()
@@ -584,3 +588,32 @@ def find_ticket_num(customer_acc, vlan):
     else:
         return ticket_num[0]
 
+
+def get_cust_name(accountNumber):
+    c1_goldengateDB = pyodbc_db_connection(server1, database1, username1, password1)
+    address = pyodbc_query(c1_goldengateDB, '''select NAME, ServiceStreetAddress1, ServiceCity, ServiceState
+                                                from SVCustom.dbo.CustomerAddresses a
+                                                inner join singleview.[dbo].[CUST_ACCT_PE_V] b on a.SingleviewAccount = b.[Primary Account Number]
+                                                where SingleviewAccount = \'''' + accountNumber + "'")
+    for line in address:
+        name = line.NAME.strip().split(":")[1]
+    cust_name = name.replace(" ", "_")
+
+    return cust_name
+
+
+def get_acc_number_by_name(customerName, vlan):
+    # log the user activity into the DB
+    conn = psycopg2.connect(host=t_host, port=t_port, dbname=t_dbname, user=t_user, password=t_pw)
+    cur = conn.cursor()
+    # execute the INSERT statement
+    cur.execute(f"SELECT customer_acc_number FROM dia_test where customer_name = '{customerName}' and vlan = {vlan};")
+    cust_acc_number = cur.fetchone()
+    # close the communication with the PostgresQL database
+    cur.close()
+    conn.close()
+
+    if cust_acc_number != None:
+        return cust_acc_number[0]
+    else:
+        return str('no ACC found')

@@ -180,7 +180,7 @@ clearButton.addEventListener('click', () => {
 function queryCustomerAddress(){  
     let customerInput = document.querySelector('input[name="customer_name"]')
     let vlanInput = document.querySelector('input[name="vlan_number"]')
-    let body = {"customer-name": customerInput.value, "vlan-number": vlanInput.value}
+    let body = {"customer-acc": customerInput.value, "vlan-number": vlanInput.value}
 
     return fetch('/api/v1/query-customer-address/', {        
         method: 'POST',
