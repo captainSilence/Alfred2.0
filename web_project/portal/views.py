@@ -224,7 +224,6 @@ def submit(request):
         clean_url = f'{settings.NSO_ADDRESS}/restconf/data/diaChecks:diaChecks={customer_name},{vlan_number}'
         requests.request('DELETE', clean_url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
 
-
         # API to create service instance
         url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:services/diaSingleHome:diaSingleHome'
         response = requests.request('PATCH', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), data=json.dumps({"diaSingleHome:diaSingleHome":[data]}), verify=False)
@@ -240,14 +239,12 @@ def submit(request):
     cur = conn.cursor()
     # execute the INSERT statement
     cur.execute("INSERT INTO user_session (customer_acc_number, vlan, user_name, time_service_created) VALUES (%s, %s, %s, %s)", (customer_acc, vlan_number, user, time))
-
     cur.execute("INSERT INTO dia_test (customer_acc_number, customer_name, vlan, ticket_number) VALUES (%s, %s, %s, %s)",(customer_acc, customer_name, vlan_number, "NULL"))
     # commit the changes to the database
     conn.commit()
     # close the communication with the PostgresQL database
     cur.close()
     conn.close()
-
 
     return redirect(f"/details/{customer_name}/{vlan_number}")
 
@@ -269,9 +266,9 @@ def login_request(request):
     redirectUrl = request.GET.get('next')
     if redirectUrl is None:
         redirectUrl = '/'
+
     username = request.POST['username']
     password = request.POST['password']
-    
     user = authenticate(username=username, password=password)
 
     if user is not None:
@@ -289,7 +286,6 @@ def api_query_customer_address(request):
     data = request.data
     accountNumber = data['customer-acc']
     customerInfo = {"customerDetail": ""}
-
     c1_goldengateDB = pyodbc_db_connection(server1, database1, username1, password1)
     address = pyodbc_query(c1_goldengateDB, '''select NAME, ServiceStreetAddress1, ServiceCity, ServiceState
                                                 from SVCustom.dbo.CustomerAddresses a
@@ -313,6 +309,7 @@ def api_get_all_sysname(request):
     sysname = []
     c1_productDB = pyodbc_db_connection(server, database, username, password)
     all_sysname = pyodbc_query(c1_productDB, "select distinct sysname from dbo.UbrNetworks")
+
     for line in all_sysname:
         if line.sysname != None:
             sysname.append(line.sysname.strip())
@@ -336,7 +333,6 @@ def api_query_ip(request):
     # address = pyodbc_query(c1_goldengateDB, '''select * from dbo.CustomerAddresses where SingleviewAccount = \'''' + accountNumber + "'")
     # for line in address:
     #     city = line.ServiceCity.lower().title()
-
     c1_productDB = pyodbc_db_connection(server, database, username, password)
     # ipPool = pyodbc_query(c1_productDB, '''select * from network_automation.dbo.UbrNetworks_copy where sysname = \'''' + city + '''' and username = \'''' + accountNumber + "' and ssu is null and macadd is null and wirelessActive is null")
     # if ipPool == []:
@@ -363,18 +359,18 @@ def api_get_access_interfaces(request):
     device = data['device']
     vlan666_ports = []
     json_response = {"access-ports": [], "uplink-ports": []}
+
     if device != '':
         url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={device}/config/tailf-ned-cienacli-acos:vlan/add/vlan=666'
         headers = {"Content-Type": "application/yang-data+json"}
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
+
         for port in response["tailf-ned-cienacli-acos:vlan"][0]['port']:
            vlan666_ports.append(port['id'])
-
 
         url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={device}/config/tailf-ned-cienacli-acos:port/tailf-ned-cienacli-acos:set'
         headers = {"Content-Type": "application/yang-data+json"}
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
-
 
         for port_dict in response["tailf-ned-cienacli-acos:set"]['port']:            
             if port_is_access(port_dict, vlan666_ports) == True:
@@ -417,10 +413,12 @@ def api_get_all_interfaces(request):
     router = data['acx_router']
     vlan666_ports = []
     ports_removed_from_vlan666 = []
+    all_access_ports = []
+    uplink_port = []
+    downlink_port = []
+    ports = []
     json_response = {"access-ports": [], "uplink-ports": [], "aggregation-ports": []}
     headers = {"Content-Type": "application/yang-data+json"}
-
-
 
     if switch != '' and router != '':
         # API to sync the devices
@@ -436,18 +434,15 @@ def api_get_all_interfaces(request):
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
         eds_ip = response.json()['tailf-ned-cienacli-acos:ip'].split('/')[0]
 
-
         url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/set/gateway'
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
         car_ip = response.json()['tailf-ned-cienacli-acos:gateway']
-
 
         url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:vlan/add/vlan=666'
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
         if response.status_code == 200:
             for port in response.json()["tailf-ned-cienacli-acos:vlan"][0]['port']:
                vlan666_ports.append(port['id'])
-
         
         url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:vlan/remove/vlan=666'
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
@@ -455,24 +450,36 @@ def api_get_all_interfaces(request):
             for port in response.json()["tailf-ned-cienacli-acos:vlan"][0]['port']:
                ports_removed_from_vlan666.append(port['id'])
 
-
         url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:port/tailf-ned-cienacli-acos:set'
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
-
-
         for port_dict in response["tailf-ned-cienacli-acos:set"]['port']:            
             if port_is_access(port_dict, vlan666_ports) == True and remove_port_from_vlan666(port_dict, ports_removed_from_vlan666) == True:
                 json_response["access-ports"].append(port_dict["name"])
 
+            all_access_ports.append(port_dict["name"])
 
-        uplink_port = calculate_access_uplink(eds_ip, car_ip)
-        json_response["uplink-ports"].append(uplink_port)
-        downlink_port = calculate_agg_downlink(eds_ip, car_ip)
-        json_response["aggregation-ports"].append(downlink_port)
+        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/config/junos:configuration/interfaces'
+        headers = {"Content-Type": "application/yang-data+json"}
+        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
+        for port in response['junos:interfaces']['interface']:
+            ports.append(port['name'])
+
+        try:
+            uplink_port.append(calculate_access_uplink(eds_ip, car_ip))
+        except:
+            uplink_port = all_access_ports
+        json_response["uplink-ports"] = uplink_port
+
+        try:
+            downlink_port.append(calculate_agg_downlink(eds_ip, car_ip))
+        except:
+            downlink_port = ports
+        json_response["aggregation-ports"] = downlink_port
 
     else:
         response = {}
-        
+
+    print(json_response)    
     return JsonResponse(json_response)
 
 
@@ -567,8 +574,8 @@ def calculate_agg_downlink(eds_ip, acx_ip):
 def removeSpace(string_with_empty_lines):
     lines = string_with_empty_lines.split("\n")
     non_empty_lines = [line for line in lines if line.strip() != ""]
-
     string_without_empty_lines = ""
+
     for line in non_empty_lines:
           string_without_empty_lines += line + "\n"
 
