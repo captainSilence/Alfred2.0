@@ -484,7 +484,7 @@ def api_get_all_interfaces(request):
 
 
 
-# Validate Ports
+# Validate Ports, check to see if port is in vlan 666 list
 def port_is_access(port_dict, vlan666_dict):
     if port_dict ["name"] in vlan666_dict:
         return True
@@ -492,6 +492,7 @@ def port_is_access(port_dict, vlan666_dict):
         return False
 
 
+# Validate Ports, check to see if port is not in removed vlan 666 list
 def remove_port_from_vlan666(port_dict, ports_removed_from_vlan666):
     if port_dict ["name"] not in ports_removed_from_vlan666:
         return True
@@ -624,3 +625,78 @@ def get_acc_number_by_name(customerName, vlan):
         return cust_acc_number[0]
     else:
         return str('no ACC found')
+
+
+@require_POST
+@login_required(login_url='/login')
+@api_view(['POST'])
+def api_epl_get_all_info(request):
+    hubRouter = ['SHO-HE-CAR-01', 'PX3-HE-CAR-AUTOMATE01']
+    hubSwitch = ['SHO-HE-EDS-01', 'PX3-HE-EDS-AUTOMATE02']
+    remoteRouter = ['PX8-CO-PCR-01', 'PX3-HE-CAR-AUTOMATE02']
+    CustomerName = ['VZW_SocSecAdmin-SHO-PX8-311']
+    vlan = [311]
+    hubRouter_downlink_interface = ['ae0', 'ae1']
+    hubRouter_route_distinguisher = ['10.201.3.101:311']
+    hubRouter_vrf_target = ['target:1003:311']
+    remoteRouter_downlink_interface = ['ae0', 'ae1']
+    remoteRouter_route_distinguisher = ['10.201.104.100:311']
+    remoteRouter_vrf_target = ['target:1003:311']
+    hunSwitch_uplink_interface = ['ae0', 'ae1']
+    hunSwitch_downlink_interface = ['5', '6', '7', '8']
+
+
+    json_response = {'hubRouter': hubRouter, 'hubSwitch': hubSwitch, 'remoteRouter': remoteRouter, 'CustomerName': CustomerName, 'vlan': vlan, 
+                    'hubRouter_downlink_interface': hubRouter_downlink_interface, 'hubRouter_route_distinguisher': hubRouter_route_distinguisher, 
+                    'hubRouter_vrf_target': hubRouter_vrf_target, 'remoteRouter_downlink_interface': remoteRouter_downlink_interface, 
+                    'remoteRouter_route_distinguisher': remoteRouter_route_distinguisher, 'remoteRouter_vrf_target': remoteRouter_vrf_target, 
+                    'hunSwitch_uplink_interface': hunSwitch_uplink_interface, 'hunSwitch_downlink_interface': hunSwitch_downlink_interface}
+
+    return JsonResponse(json_response)
+
+
+@require_POST
+@login_required(login_url='/login')
+@api_view(['POST'])
+def api_epl_get_remoteRouter_interfaces(request):
+    router = request.data['remoteRouter']
+    json_response = {"aggregation-ports": []}
+    headers = {"Content-Type": "application/yang-data+json"}
+    url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/config/junos:configuration/interfaces'
+    headers = {"Content-Type": "application/yang-data+json"}
+    response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
+    for port in response['junos:interfaces']['interface']:
+        json_response["aggregation-ports"].append(port['name'])
+
+    return JsonResponse(json_response)
+
+
+def get_vlan_name(customerName, hubRouterName, remoteRouterName, vlan):
+    systemA = hubRouterName.split('-')[0]
+    systemB = remoteRouterName.split('-')[0]
+    vlanName = f'{customerName}-{systemA}-{systemB}-{vlan}'
+
+    return vlanName
+
+
+def calculate_route_distinguisher(routerName, vlan):
+    headers = {"Content-Type": "application/yang-data+json"}
+    url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={routerName}/config/junos:configuration/interfaces/interface=lo0/unit=0/family/inet/address'
+    headers = {"Content-Type": "application/yang-data+json"}
+    response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
+    lo0_ip = response['junos:address'][0]['name'].split('/')[0]
+    route_distinguisher = f'{lo0_ip}:{vlan}'
+
+    return route_distinguisher
+
+
+def calculate_vrf_target(routerName, vlan):
+    headers = {"Content-Type": "application/yang-data+json"}
+    url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={routerName}/config/junos:configuration/interfaces/interface=lo0/unit=0/family/inet/address'
+    headers = {"Content-Type": "application/yang-data+json"}
+    response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
+    lo0_ip = response['junos:address'][0]['name'].split('/')[0]
+    ospfCode = lo0_ip.split('.')[2].zfill(3)
+    vrf_target = f'target:1{ospfCode}:{vlan}'
+
+    return vrf_target

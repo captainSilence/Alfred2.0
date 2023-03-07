@@ -19,4 +19,6 @@ urlpatterns = [
     path('details/<str:customer_name>/<int:vlan_number>', views.details, name='details'),
     path('config/<str:customer_name>/<int:vlan_number>', views.device_config, name='details'),
     path('error', views.error, name='error'),
+    path('api/v1/epl-get-all-interfaces/', views.api_get_all_interfaces),
+    path('api/v1/epl-get-remote-interfaces/', views.api_epl_get_remoteRouter_interfaces),
 ]
