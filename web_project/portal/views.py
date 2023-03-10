@@ -365,7 +365,7 @@ def submit_epl(request):
     data['remoteRouter']['vrf-target'] = request.POST.get('remote_router_vrf')
     data['remoteRouter']['access-interface'] = request.POST.get('remote_router_downlink')
     data['remoteRouter']['site-number'] = int(2)
-    
+    print(data)
     user = request.user.username
     time = datetime.datetime.now()
     # summary = "Florida Circuit for testing."
@@ -401,7 +401,7 @@ def submit_epl(request):
     cur.close()
     conn.close()
 
-    return redirect(f"/detailsepl/{customer_name}/{vlan}")
+    return redirect(f"/detailsepl/{vlan_name}/{vlan}")
 
 
 @require_GET
@@ -971,7 +971,7 @@ def get_vlan_name(customerName, hubRouterName, remoteRouterName, vlan):
     name = customerName[:20] if len(customerName) > 20 else customerName
     systemA = hubRouterName.split('-')[0]
     systemB = remoteRouterName.split('-')[0]
-    vlanName = f'{customerName}-{systemA}-{systemB}-{vlan}'
+    vlanName = f'{name}-{systemA}-{systemB}-{vlan}'
 
     return vlanName
 

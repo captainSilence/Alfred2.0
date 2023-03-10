@@ -207,6 +207,8 @@ confirmationModalSubmit.addEventListener('click', () => {
     document.querySelector('#confirmation-modal-cancel').disabled = true;
     document.querySelector('select[name="access_device-name"]').disabled = false;
     document.querySelector('select[name="aggregation_device-name"]').disabled = false;
+    document.querySelector('select[name="remote_access_device-name"]').disabled = false;
+    document.querySelector('select[name="remote_aggregation_device-name"]').disabled = false;
     debugger;
     let form = document.querySelector('#dia-form');
     form.submit();
@@ -377,7 +379,7 @@ function cal_remote_interface(event) {
     let accessDeviceSelect = document.querySelector('select[name="remote_access_device-name"]')
     let aggregationDeviceSelect = document.querySelector('select[name="remote_aggregation_device-name"]')
     let vlan = document.querySelector('input[name="vlan_number"]')
-    let hubVRF = document.querySelector('select[name="primary_router_distinguisher"]')
+    let hubVRF = document.querySelector('select[name="primary_router_vrf"]')
     if (vlan.value == "") {
         alert("please enter the VLAN number first")
     }
@@ -461,7 +463,7 @@ function cal_remote_interface(event) {
 
                 let vrfTargetHTML = '';
                 let vrf = hubVRF.value
-                vrfTargetHTML = vrfTargetHTML + `<option value="${vrf}" >${vrf}</option>\n`;                
+                vrfTargetHTML = vrfTargetHTML + `<option value="${vrf}" >${vrf}</option>\n`;
                 vrfTargetSelect.innerHTML = vrfTargetHTML
 
             })
