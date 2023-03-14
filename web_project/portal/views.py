@@ -9,6 +9,7 @@ from rest_framework.decorators import api_view
 from requests.auth import HTTPBasicAuth
 from django.conf import settings
 from collections import defaultdict
+from . import crq_ticket_class
 import requests
 import json
 import sys
@@ -251,7 +252,7 @@ def detailsepl(request, customer_name, vlan_number):
     service_response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
     try:
         response_json = json.loads(service_response.text)
-        params = {'data': response_json['eplHubRemote:eplHubRemote'][0], 'customer_name': customer_name, 'vlan_number': vlan_number, 'log_entry': False}   
+        params = {'data': response_json['eplHubRemote:eplHubRemote'][0], 'customer_name': customer_name, 'vlan_number': vlan_number, 'log_entry': False}
     
 
     except Exception as e:
@@ -284,10 +285,7 @@ def submit(request):
     data['access']['uplink-port'] = request.POST.get('access_uplink-port')
     user = request.user.username
     time = datetime.datetime.now()
-    # summary = "Florida Circuit for testing."
-    # description = "this is a test"
-    # object = crq_ticket_class5.crq_ticket()
-    # object.cls_start(summary, description)
+
 
     # Path NSO for services
     try:
@@ -360,18 +358,14 @@ def submit_epl(request):
     data['hubRouter']['access-interface'] = request.POST.get('primary_router_downlink')
     data['hubRouter']['site-number'] = int(1)
     data['remoteRouter'] = {}
-    data['remoteRouter']['device-name'] = request.POST.get('remote_aggregation_device-name')
+    data['remoteRouter']['device-name'] = remoteRouter
     data['remoteRouter']['route-distinguisher'] = request.POST.get('remote_router_distinguisher')
     data['remoteRouter']['vrf-target'] = request.POST.get('remote_router_vrf')
     data['remoteRouter']['access-interface'] = request.POST.get('remote_router_downlink')
     data['remoteRouter']['site-number'] = int(2)
-    print(data)
+ 
     user = request.user.username
     time = datetime.datetime.now()
-    # summary = "Florida Circuit for testing."
-    # description = "this is a test"
-    # object = crq_ticket_class5.crq_ticket()
-    # object.cls_start(summary, description)
 
     # Path NSO for services
     try:
@@ -385,6 +379,13 @@ def submit_epl(request):
             request.session['error_message'] = response.text
             return redirect(f'/error')
 
+        # creating Remedy ticket for EPL service instance
+        summary = f"EPL Circuit provisioning for customer{customer_name} with vlan {vlan}."
+        description = f"Customer account: {customer_acc}, Vlan: {vlan}, Hub router: {hubRouter}, Hub switch: {hubSwitch}, Remote router: {remoteRouter}, Remote switch: {remoteSwitch}"
+        object = crq_ticket_class.crq_ticket()
+        object.cls_start(summary, description)
+        ticket_number = object.ticket_no
+
     except Exception as e:
         return redirect(f'/error/{e}')
 
@@ -393,7 +394,7 @@ def submit_epl(request):
     cur = conn.cursor()
     # execute the INSERT statement
     cur.execute("INSERT INTO epl (customer_acc_number, customer_name, vlan, hub_router, hub_switch, remote_router, remote_switch, status, ticket_number, user_name, time_service_created) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                (customer_acc, vlan_name, vlan, hubRouter, hubSwitch, remoteRouter, remoteSwitch, status, "NULL", user, time))
+                (customer_acc, vlan_name, vlan, hubRouter, hubSwitch, remoteRouter, remoteSwitch, status, ticket_number, user, time))
 
     # commit the changes to the database
     conn.commit()
