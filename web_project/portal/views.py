@@ -9,7 +9,10 @@ from rest_framework.decorators import api_view
 from requests.auth import HTTPBasicAuth
 from django.conf import settings
 from collections import defaultdict
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from . import crq_ticket_class
+import smtplib
 import requests
 import json
 import sys
@@ -52,6 +55,10 @@ t_dbname = "postgres"
 t_user = "myprojectuser"
 t_pw = "password"
 pre_post_checks_key = r'!'
+
+# email notification var
+strFrom = 'bizhou.duan@cableone.biz'
+strTo = 'bizhou.duan@cableone.biz, Sparklight-NetworkAutomation@cableone.biz'
 
 
 @require_GET
@@ -308,24 +315,46 @@ def submit(request):
             request.session['error_message'] = response.text
             return redirect(f'/error')
 
+        # log the user activity into the DB
+        conn = psycopg2.connect(host=t_host, port=t_port,
+                                dbname=t_dbname, user=t_user, password=t_pw)
+        cur = conn.cursor()
+        # execute the INSERT statement
+        cur.execute("INSERT INTO user_session (customer_acc_number, vlan, user_name, time_service_created) VALUES (%s, %s, %s, %s)",
+                    (customer_acc, vlan_number, user, time))
+        cur.execute("INSERT INTO dia_test (customer_acc_number, customer_name, vlan, ticket_number) VALUES (%s, %s, %s, %s)",
+                    (customer_acc, customer_name, vlan_number, "NULL"))
+        # commit the changes to the database
+        conn.commit()
+        # close the communication with the PostgresQL database
+        cur.close()
+        conn.close()
+
+        # send email notification
+        # Create the root message and fill in the from, to, and subject headers
+        msgRoot = MIMEMultipart('related')
+        msgRoot['Subject'] = 'Alfred 2.0 Login Notification'
+        msgRoot['From'] = strFrom
+        msgRoot['To'] = strTo
+        msgRoot.preamble = 'This is a multi-part message in MIME format.'
+
+        # Encapsulate the plain and HTML versions of the message body in an
+        # 'alternative' part, so message agents can decide which they want to display.
+        msgAlternative = MIMEMultipart('alternative')
+        msgRoot.attach(msgAlternative)
+        text = f'user {user} has just submitted a DIA provisioning request for customer {customer_name}'
+        msgText = MIMEText(text)
+        msgAlternative.attach(msgText)
+
+        connection = smtplib.SMTP(host='smtp-relay.corp.cableone.net', port=25)
+        connection.starttls()
+        connection.send_message(msgRoot)
+        connection.quit()
+
     except Exception as e:
         return redirect(f'/error/{e}')
 
-    # log the user activity into the DB
-    conn = psycopg2.connect(host=t_host, port=t_port,
-                            dbname=t_dbname, user=t_user, password=t_pw)
-    cur = conn.cursor()
-    # execute the INSERT statement
-    cur.execute("INSERT INTO user_session (customer_acc_number, vlan, user_name, time_service_created) VALUES (%s, %s, %s, %s)",
-                (customer_acc, vlan_number, user, time))
-    cur.execute("INSERT INTO dia_test (customer_acc_number, customer_name, vlan, ticket_number) VALUES (%s, %s, %s, %s)",
-                (customer_acc, customer_name, vlan_number, "NULL"))
-    # commit the changes to the database
-    conn.commit()
-    # close the communication with the PostgresQL database
-    cur.close()
-    conn.close()
-
+    
     return redirect(f"/details/{customer_name}/{vlan_number}")
 
 
@@ -386,22 +415,42 @@ def submit_epl(request):
         object.cls_start(summary, description)
         ticket_number = object.ticket_no
 
+        # log the user activity into the DB
+        conn = psycopg2.connect(host=t_host, port=t_port, dbname=t_dbname, user=t_user, password=t_pw)
+        cur = conn.cursor()
+        # execute the INSERT statement
+        cur.execute("INSERT INTO epl (customer_acc_number, customer_name, vlan, hub_router, hub_switch, remote_router, remote_switch, status, ticket_number, user_name, time_service_created) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    (customer_acc, vlan_name, vlan, hubRouter, hubSwitch, remoteRouter, remoteSwitch, status, ticket_number, user, time))
+
+        # commit the changes to the database
+        conn.commit()
+        # close the communication with the PostgresQL database
+        cur.close()
+        conn.close()
+
+        # send email notification
+        # Create the root message and fill in the from, to, and subject headers
+        msgRoot = MIMEMultipart('related')
+        msgRoot['Subject'] = 'Alfred 2.0 Login Notification'
+        msgRoot['From'] = strFrom
+        msgRoot['To'] = strTo
+        msgRoot.preamble = 'This is a multi-part message in MIME format.'
+
+        # Encapsulate the plain and HTML versions of the message body in an
+        # 'alternative' part, so message agents can decide which they want to display.
+        msgAlternative = MIMEMultipart('alternative')
+        msgRoot.attach(msgAlternative)
+        text = f'user {user} has just submitted a EPL provisioning request for customer {customer_name}'
+        msgText = MIMEText(text)
+        msgAlternative.attach(msgText)
+
+        connection = smtplib.SMTP(host='smtp-relay.corp.cableone.net', port=25)
+        connection.starttls()
+        connection.send_message(msgRoot)
+        connection.quit()
     except Exception as e:
         return redirect(f'/error/{e}')
-
-    # log the user activity into the DB
-    conn = psycopg2.connect(host=t_host, port=t_port, dbname=t_dbname, user=t_user, password=t_pw)
-    cur = conn.cursor()
-    # execute the INSERT statement
-    cur.execute("INSERT INTO epl (customer_acc_number, customer_name, vlan, hub_router, hub_switch, remote_router, remote_switch, status, ticket_number, user_name, time_service_created) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                (customer_acc, vlan_name, vlan, hubRouter, hubSwitch, remoteRouter, remoteSwitch, status, ticket_number, user, time))
-
-    # commit the changes to the database
-    conn.commit()
-    # close the communication with the PostgresQL database
-    cur.close()
-    conn.close()
-
+    
     return redirect(f"/detailsepl/{vlan_name}/{vlan}")
 
 
@@ -900,6 +949,7 @@ def get_cust_name(accountNumber):
     for line in address:
         name = line.NAME.strip().split(":")[1]
     cust_name = name.replace(" ", "_")
+    cust_name = cust_name[:27] if len(cust_name) > 27 else cust_name
 
     return cust_name
 
@@ -969,7 +1019,7 @@ def api_epl_get_remoteRouter_interfaces(request):
 
 def get_vlan_name(customerName, hubRouterName, remoteRouterName, vlan):
     customerName = customerName.replace(' ', '_')
-    name = customerName[:20] if len(customerName) > 20 else customerName
+    name = customerName[:19] if len(customerName) > 19 else customerName
     systemA = hubRouterName.split('-')[0]
     systemB = remoteRouterName.split('-')[0]
     vlanName = f'{name}-{systemA}-{systemB}-{vlan}'

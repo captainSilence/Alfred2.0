@@ -222,18 +222,25 @@ clearButton.addEventListener('click', () => {
 
     let customerInput = document.querySelector('input[name="customer_name"]')
     let vlanInput = document.querySelector('input[name="vlan_number"]')
-    let checkBox = document.querySelector('input[name="reserve_ip"]')
     let address = document.getElementById('customer_address')
-    document.querySelectorAll('select[name="aggregation_ipv4-address"] option').forEach(o => o.remove())
-    document.querySelectorAll('select[name="aggregation_cidr-mask"] option').forEach(o => o.remove())
-    document.querySelectorAll('select[name="aggregation_access-interface"] option').forEach(o => o.remove())
+    document.querySelectorAll('select[name="primary_router_downlink"] option').forEach(o => o.remove())
+    document.querySelectorAll('select[name="primary_router_distinguisher"] option').forEach(o => o.remove())
+    document.querySelectorAll('select[name="primary_router_vrf"] option').forEach(o => o.remove())
     document.querySelectorAll('select[name="access_access-port"] option').forEach(o => o.remove())
     document.querySelectorAll('select[name="access_uplink-port"] option').forEach(o => o.remove())
-    checkBox.removeAttribute('disabled', 'disabled')
+    document.querySelectorAll('select[name="remote_router_downlink"] option').forEach(o => o.remove())
+    document.querySelectorAll('select[name="remote_router_distinguisher"] option').forEach(o => o.remove())
+    document.querySelectorAll('select[name="remote_router_vrf"] option').forEach(o => o.remove())
+    document.querySelectorAll('select[name="remote_access_uplink-port"] option').forEach(o => o.remove())
     customerInput.removeAttribute('readonly', 'readonly')
     vlanInput.removeAttribute('readonly', 'readonly')
     address.innerHTML = ""
     address.hidden = true
+
+    document.querySelector('select[name="access_device-name"]').disabled = false;
+    document.querySelector('select[name="aggregation_device-name"]').disabled = false;
+    document.querySelector('select[name="remote_access_device-name"]').disabled = false;
+    document.querySelector('select[name="remote_aggregation_device-name"]').disabled = false;
 
 })
 
@@ -285,6 +292,8 @@ function cal_interface(event) {
     let vlan = document.querySelector('input[name="vlan_number"]')
     if (vlan.value == "") {
         alert("please enter the VLAN number first")
+        let form = document.querySelector('#dia-form')
+        form.reset()
     }
     else if (aggregationDeviceSelect.value != "" && accessDeviceSelect.value != "") {
         let accessPortSpinner = document.querySelector('#access-port-spinner')
@@ -382,6 +391,8 @@ function cal_remote_interface(event) {
     let hubVRF = document.querySelector('select[name="primary_router_vrf"]')
     if (vlan.value == "") {
         alert("please enter the VLAN number first")
+        let form = document.querySelector('#dia-form')
+        form.reset()
     }
     else if (hubVRF.value == "") {
         alert("please wait until the Primary router VRF Target shows up")
