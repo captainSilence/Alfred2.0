@@ -30,11 +30,11 @@ function getCookie(name) {
 }
 
 // Validate Form at Submit Event Raise Confirmation Modal
-function validateForm(event){    
+function validateForm(event) {
     let customerInput = document.querySelector('input[name="customer_name"]')
     let vlanInput = document.querySelector('input[name="vlan_number"]')
     let ipv4AddressInput = document.querySelector('select[name="aggregation_ipv4-address"]')
-    
+
     let accessPortSelect = document.querySelector('select[name="access_access-port"]')
     let uplinkPortSelect = document.querySelector('select[name="access_uplink-port"]')
     let aggregationPortSelect = document.querySelector('select[name="aggregation_access-interface"]')
@@ -47,18 +47,18 @@ function validateForm(event){
     // console.log(aggregationCIDRMask)
 
     customerInput.classList.remove('form-error')
-    vlanInput.classList.remove('form-error') 
+    vlanInput.classList.remove('form-error')
     accessPortSelect.classList.remove('form-error')
     uplinkPortSelect.classList.remove('form-error')
     ipv4AddressInput.classList.remove('form-error')
-    aggregationPortSelect.classList.remove('form-error')  
-    
+    aggregationPortSelect.classList.remove('form-error')
+
     accessDeviceSelect.classList.remove('form-error')
     aggregationDeviceSelect.classList.remove('form-error')
     // debugger;
     aggregationCIDRMask.classList.remove('form-error')
 
-    
+
 
 
     let formValid = true
@@ -70,7 +70,7 @@ function validateForm(event){
         vlanInput.classList.add('form-error')
         formValid = false
     }
-    if (isNaN(parseInt(vlanInput.value))){        
+    if (isNaN(parseInt(vlanInput.value))) {
         vlanInput.classList.add('form-error')
         formValid = false
     }
@@ -106,11 +106,11 @@ function validateForm(event){
     }
 
     if (formValid == false) {
-        event.preventDefault(); 
-       
-    } else {        
         event.preventDefault();
-        renderModal();        
+
+    } else {
+        event.preventDefault();
+        renderModal();
     }
 }
 
@@ -119,7 +119,7 @@ function renderModal() {
     let confirmationTable = document.querySelector('#confirmation-table')
     confirmationTable.innerHTML = '';
     let formElement = document.querySelector('#dia-form');
-    
+
     let formData = new FormData(formElement)
     let tableHTML = ''
     // debugger;
@@ -127,26 +127,28 @@ function renderModal() {
         translatedKey = formFieldsDict[key]
         if (!(key.includes('csrf'))) {
             tableHTML = tableHTML + `<tr>\n <td>${translatedKey}</td>\n<td>${value}</td>\n</tr>`
-        }         
-      }
+        }
+    }
 
     confirmationTable.innerHTML = tableHTML;
     // debugger;
     let confirmationModal = new bootstrap.Modal(document.querySelector('#confirmationModal'));
     confirmationModal.toggle();
 
-    
+
 }
 
 
 // Submit Form after confirmation
 let confirmationModalSubmit = document.querySelector('#confirmation-modal-submit');
 confirmationModalSubmit.addEventListener('click', () => {
-    
+
     document.querySelector('#confirmation-modal-submit').disabled = true;
     document.querySelector('#confirmation-modal-cancel').disabled = true;
     document.querySelector('select[name="access_device-name"]').disabled = false;
     document.querySelector('select[name="aggregation_device-name"]').disabled = false;
+    document.querySelector('select[name="access_uplink-port"]').disabled = false;
+    document.querySelector('select[name="aggregation_access-interface"]').disabled = false;
     debugger;
     let form = document.querySelector('#dia-form');
     form.submit();
@@ -172,27 +174,31 @@ clearButton.addEventListener('click', () => {
     vlanInput.removeAttribute('readonly', 'readonly')
     address.innerHTML = ""
     address.hidden = true
-    
+
+    document.querySelector('select[name="access_device-name"]').disabled = false;
+    document.querySelector('select[name="aggregation_device-name"]').disabled = false;
+    document.querySelector('select[name="access_uplink-port"]').disabled = false;
+    document.querySelector('select[name="aggregation_access-interface"]').disabled = false;
 })
 
 
 // Query customer Address
-function queryCustomerAddress(){  
+function queryCustomerAddress() {
     let customerInput = document.querySelector('input[name="customer_name"]')
     let vlanInput = document.querySelector('input[name="vlan_number"]')
-    let body = {"customer-acc": customerInput.value, "vlan-number": vlanInput.value}
+    let body = { "customer-acc": customerInput.value, "vlan-number": vlanInput.value }
 
-    return fetch('/api/v1/query-customer-address/', {        
+    return fetch('/api/v1/query-customer-address/', {
         method: 'POST',
         body: JSON.stringify(body),
         headers: {
             "X-CSRFToken": getCookie("csrftoken"),
             "Accept": "application/json",
             'Content-Type': 'application/json'
-          },
+        },
         credentials: "same-origin"
-    }).then (response => {
-        
+    }).then(response => {
+
         return response.json().then(data => {
             customerAddress = data;
             console.log(customerAddress)
@@ -200,62 +206,62 @@ function queryCustomerAddress(){
             let address = document.getElementById('customer_address')
             address.removeAttribute("hidden")
             address.innerHTML = customerAddress["customerDetail"]
-        })        
-    })        
+        })
+    })
 }
 
 
 // Query customer Sysname
-function querySysname(){
-    return fetch('/api/v1/get-all-sysname/', {        
+function querySysname() {
+    return fetch('/api/v1/get-all-sysname/', {
         method: 'GET',
         headers: {
             "X-CSRFToken": getCookie("csrftoken"),
             "Accept": "application/json",
             'Content-Type': 'application/json'
-          },
+        },
         credentials: "same-origin"
-    }).then (response => {
-        
+    }).then(response => {
+
         return response.json().then(data => {
             customerSysname = data["city"];
             console.log(customerSysname);
             let sysname = document.querySelector('select[name="sysname"]');
-            for (let index in customerSysname){
+            for (let index in customerSysname) {
                 const singleIP = document.createElement('option');
                 singleIP.innerHTML = customerSysname[index];
                 sysname.add(singleIP);
             }
-        })        
-    })        
+        })
+    })
 }
 
 
 // Query IPv4 Address
-function queryIpv4Address(){  
+function queryIpv4Address() {
     let ipv4Spinner = document.querySelector('#ipv4-spinner');
     ipv4Spinner.className = 'spinner-border'
     let customerInput = document.querySelector('input[name="customer_name"]')
     let vlanInput = document.querySelector('input[name="vlan_number"]')
     let sysname = document.querySelector('select[name="sysname"]')
-    let body = {"customer-name": customerInput.value, "vlan-number": vlanInput.value, "sysname": sysname.value}
+    let body = { "customer-name": customerInput.value, "vlan-number": vlanInput.value, "sysname": sysname.value }
     document.querySelector('select[name="aggregation_cidr-mask"]').disabled = false;
-    return fetch('/api/v1/query-ipv4-address/', {        
+    return fetch('/api/v1/query-ipv4-address/', {
         method: 'POST',
         body: JSON.stringify(body),
         headers: {
             "X-CSRFToken": getCookie("csrftoken"),
             "Accept": "application/json",
             'Content-Type': 'application/json'
-          },
+        },
         credentials: "same-origin"
-    }).then (response => {
-        
+    }).then(response => {
+
         return response.json().then(data => {
             ipAddrAndMask = data;
             let ipMask = document.querySelector('select[name="aggregation_cidr-mask"]');
 
-            for (let key in ipAddrAndMask){
+            for (let key in ipAddrAndMask) {
                 // console.log(key)
                 const singleIP = document.createElement('option');
                 singleIP.innerHTML = key;
@@ -264,8 +270,8 @@ function queryIpv4Address(){
 
             let ipv4Spinner = document.querySelector('#ipv4-spinner');
             ipv4Spinner.className = 'spinner-border d-none'
-        })        
-    })        
+        })
+    })
 }
 
 // Update the ip according to the subnet mask user selected
@@ -277,7 +283,7 @@ CIDRMask.addEventListener('change', () => {
     document.querySelectorAll('select[name="aggregation_ipv4-address"] option').forEach(o => o.remove())
     const selectedIP = CIDRMask.options[CIDRMask.selectedIndex].text
     console.log(ipAddrAndMask)
-    for (let i in ipAddrAndMask[selectedIP]){
+    for (let i in ipAddrAndMask[selectedIP]) {
         const singleIP = document.createElement('option');
         singleIP.innerHTML = ipAddrAndMask[selectedIP][i];
         IPv4Addr.add(singleIP)
@@ -287,7 +293,7 @@ CIDRMask.addEventListener('change', () => {
 
 
 // load all sysname
-document.addEventListener('DOMContentLoaded', function(){
+document.addEventListener('DOMContentLoaded', function () {
     querySysname()
     let element = document.getElementById('navBarForm');
     element.classList.add('active');
@@ -300,27 +306,27 @@ checkBox.addEventListener('change', () => {
     let customerInput = document.querySelector('input[name="customer_name"]')
     let vlanInput = document.querySelector('input[name="vlan_number"]')
     customerInput.classList.remove('form-error')
-    vlanInput.classList.remove('form-error') 
-    if (customerInput.value == '') {        
+    vlanInput.classList.remove('form-error')
+    if (customerInput.value == '') {
         checkBox.checked = false
-        customerInput.classList.add('form-error')        
-    } 
-    if (isNaN(parseInt(vlanInput.value))){
+        customerInput.classList.add('form-error')
+    }
+    if (isNaN(parseInt(vlanInput.value))) {
         checkBox.checked = false
         vlanInput.classList.add('form-error')
     }
-    
-    if (vlanInput.value == '') {        
+
+    if (vlanInput.value == '') {
         checkBox.checked = false
-        vlanInput.classList.add('form-error')        
-    } 
+        vlanInput.classList.add('form-error')
+    }
     if (checkBox.checked) {
         checkBox.setAttribute('disabled', 'disabled')
         customerInput.setAttribute('readonly', 'readonly')
         vlanInput.setAttribute('readonly', 'readonly')
         queryIpv4Address()
         queryCustomerAddress()
-    } 
+    }
 })
 
 // Render Access Ports
@@ -329,7 +335,7 @@ let aggregationDeviceSelect = document.querySelector('select[name="aggregation_d
 accessDeviceSelect.addEventListener('change', () => {
     console.log(aggregationDeviceSelect.value == null)
     console.log(aggregationDeviceSelect.value == "")
-    if (aggregationDeviceSelect.value != ""){   
+    if (aggregationDeviceSelect.value != "") {
         let accessPortSpinner = document.querySelector('#access-port-spinner')
         let uplinkPortSpinner = document.querySelector('#uplink-port-spinner')
         let aggregationPortSpinner = document.querySelector('#aggregation-port-spinner')
@@ -340,17 +346,17 @@ accessDeviceSelect.addEventListener('change', () => {
         aggregationDeviceSelect.disabled = true
 
         let accessPortSelect = document.querySelector('select[name="access_access-port"]')
-        let uplinkPortSelect = document.querySelector('select[name="access_uplink-port"]') 
-        let aggregationPortSelect = document.querySelector('select[name="aggregation_access-interface"]')       
+        let uplinkPortSelect = document.querySelector('select[name="access_uplink-port"]')
+        let aggregationPortSelect = document.querySelector('select[name="aggregation_access-interface"]')
         accessPortSelect.innerHTML = '';
         uplinkPortSelect.innerHTML = '';
         aggregationPortSelect.innerHTML = '';
 
         let accessDevice = accessDeviceSelect.value
-        let aggregationDevice = aggregationDeviceSelect.value      
-        body = {"eds_switch": accessDevice, "acx_router": aggregationDevice}
-        fetch('/api/v1/get-all-interfaces/', {        
-            method: 'POST',        
+        let aggregationDevice = aggregationDeviceSelect.value
+        body = { "eds_switch": accessDevice, "acx_router": aggregationDevice }
+        fetch('/api/v1/get-all-interfaces/', {
+            method: 'POST',
             body: JSON.stringify(body),
             headers: {
                 "X-CSRFToken": getCookie("csrftoken"),
@@ -358,35 +364,40 @@ accessDeviceSelect.addEventListener('change', () => {
                 'Content-Type': 'application/json'
             },
             credentials: "same-origin"
-            }).then (response => {        
+        }).then(response => {
             return response.json().then(data => {
                 accessPortSpinner.classList.add('d-none')
                 uplinkPortSpinner.classList.add('d-none')
                 aggregationPortSpinner.classList.add('d-none')
-                let accessPortsHTML = '';            
-                for (let i = 0; i < data['access-ports'].length; i++ ) {
+                let accessPortsHTML = '';
+                for (let i = 0; i < data['access-ports'].length; i++) {
                     let port = data['access-ports'][i];
                     accessPortsHTML = accessPortsHTML + `<option value="${port}" >${port}</option>\n`;
                 }
                 accessPortSelect.innerHTML = accessPortsHTML
 
                 let uplinkPortsHTML = '';
-                for (let i = 0; i < data['uplink-ports'].length; i++ ) {
+                for (let i = 0; i < data['uplink-ports'].length; i++) {
                     let port = data['uplink-ports'][i];
                     uplinkPortsHTML = uplinkPortsHTML + `<option value="${port}" >${port}</option>\n`;
                 }
                 uplinkPortSelect.innerHTML = uplinkPortsHTML
+                if (data['uplink-ports'].length == 1) {
+                    uplinkPortSelect.disabled = true
+                }
 
                 let aggregationPortsHTML = '';
-                for (let i = 0; i < data['aggregation-ports'].length; i++ ) {
+                for (let i = 0; i < data['aggregation-ports'].length; i++) {
                     let port = data['aggregation-ports'][i];
                     aggregationPortsHTML = aggregationPortsHTML + `<option value="${port}" >${port}</option>\n`;
                 }
                 aggregationPortSelect.innerHTML = aggregationPortsHTML
+                if (data['aggregation-ports'].length == 1) {
+                    aggregationPortSelect.disabled = true
+                }
 
-                
-                })        
             })
+        })
     } else {
         alert("please select the ACX router")
     }
@@ -394,7 +405,7 @@ accessDeviceSelect.addEventListener('change', () => {
 // Render Aggregation Ports
 // let aggregationDeviceSelect = document.querySelector('select[name="aggregation_device-name"]')
 aggregationDeviceSelect.addEventListener('change', () => {
-    if (accessDeviceSelect.value != ""){
+    if (accessDeviceSelect.value != "") {
         let accessPortSpinner = document.querySelector('#access-port-spinner')
         let uplinkPortSpinner = document.querySelector('#uplink-port-spinner')
         let aggregationPortSpinner = document.querySelector('#aggregation-port-spinner')
@@ -405,8 +416,8 @@ aggregationDeviceSelect.addEventListener('change', () => {
         aggregationDeviceSelect.disabled = true
 
         let accessPortSelect = document.querySelector('select[name="access_access-port"]')
-        let uplinkPortSelect = document.querySelector('select[name="access_uplink-port"]') 
-        let aggregationPortSelect = document.querySelector('select[name="aggregation_access-interface"]')       
+        let uplinkPortSelect = document.querySelector('select[name="access_uplink-port"]')
+        let aggregationPortSelect = document.querySelector('select[name="aggregation_access-interface"]')
         accessPortSelect.innerHTML = '';
         uplinkPortSelect.innerHTML = '';
         aggregationPortSelect.innerHTML = '';
@@ -414,9 +425,9 @@ aggregationDeviceSelect.addEventListener('change', () => {
         let accessDevice = accessDeviceSelect.value
         let aggregationDevice = aggregationDeviceSelect.value
 
-        body = {"eds_switch": accessDevice, "acx_router": aggregationDevice}
-        fetch('/api/v1/get-all-interfaces/', {        
-            method: 'POST',        
+        body = { "eds_switch": accessDevice, "acx_router": aggregationDevice }
+        fetch('/api/v1/get-all-interfaces/', {
+            method: 'POST',
             body: JSON.stringify(body),
             headers: {
                 "X-CSRFToken": getCookie("csrftoken"),
@@ -424,35 +435,40 @@ aggregationDeviceSelect.addEventListener('change', () => {
                 'Content-Type': 'application/json'
             },
             credentials: "same-origin"
-            }).then (response => {        
+        }).then(response => {
             return response.json().then(data => {
                 accessPortSpinner.classList.add('d-none')
                 uplinkPortSpinner.classList.add('d-none')
                 aggregationPortSpinner.classList.add('d-none')
-                let accessPortsHTML = '';            
-                for (let i = 0; i < data['access-ports'].length; i++ ) {
+                let accessPortsHTML = '';
+                for (let i = 0; i < data['access-ports'].length; i++) {
                     let port = data['access-ports'][i];
                     accessPortsHTML = accessPortsHTML + `<option value="${port}" >${port}</option>\n`;
                 }
                 accessPortSelect.innerHTML = accessPortsHTML
 
                 let uplinkPortsHTML = '';
-                for (let i = 0; i < data['uplink-ports'].length; i++ ) {
+                for (let i = 0; i < data['uplink-ports'].length; i++) {
                     let port = data['uplink-ports'][i];
                     uplinkPortsHTML = uplinkPortsHTML + `<option value="${port}" >${port}</option>\n`;
                 }
                 uplinkPortSelect.innerHTML = uplinkPortsHTML
+                if (data['uplink-ports'].length == 1) {
+                    uplinkPortSelect.disabled = true
+                }
 
                 let aggregationPortsHTML = '';
-                for (let i = 0; i < data['aggregation-ports'].length; i++ ) {
+                for (let i = 0; i < data['aggregation-ports'].length; i++) {
                     let port = data['aggregation-ports'][i];
                     aggregationPortsHTML = aggregationPortsHTML + `<option value="${port}" >${port}</option>\n`;
                 }
                 aggregationPortSelect.innerHTML = aggregationPortsHTML
+                if (data['aggregation-ports'].length == 1) {
+                    aggregationPortSelect.disabled = true
+                }
 
-                
-                })        
             })
+        })
     } else {
         alert("please select the EDS switch")
     }

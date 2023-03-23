@@ -209,6 +209,14 @@ confirmationModalSubmit.addEventListener('click', () => {
     document.querySelector('select[name="aggregation_device-name"]').disabled = false;
     document.querySelector('select[name="remote_access_device-name"]').disabled = false;
     document.querySelector('select[name="remote_aggregation_device-name"]').disabled = false;
+    document.querySelector('select[name="primary_router_downlink"]').disabled = false;
+    document.querySelector('select[name="primary_router_distinguisher"]').disabled = false;
+    document.querySelector('select[name="primary_router_vrf"]').disabled = false;
+    document.querySelector('select[name="access_uplink-port"]').disabled = false;
+    document.querySelector('select[name="remote_router_downlink"]').disabled = false;
+    document.querySelector('select[name="remote_router_distinguisher"]').disabled = false;
+    document.querySelector('select[name="remote_router_vrf"]').disabled = false;
+    document.querySelector('select[name="remote_access_uplink-port"]').disabled = false;
     debugger;
     let form = document.querySelector('#dia-form');
     form.submit();
@@ -241,6 +249,14 @@ clearButton.addEventListener('click', () => {
     document.querySelector('select[name="aggregation_device-name"]').disabled = false;
     document.querySelector('select[name="remote_access_device-name"]').disabled = false;
     document.querySelector('select[name="remote_aggregation_device-name"]').disabled = false;
+    document.querySelector('select[name="primary_router_downlink"]').disabled = false;
+    document.querySelector('select[name="primary_router_distinguisher"]').disabled = false;
+    document.querySelector('select[name="primary_router_vrf"]').disabled = false;
+    document.querySelector('select[name="access_uplink-port"]').disabled = false;
+    document.querySelector('select[name="remote_router_downlink"]').disabled = false;
+    document.querySelector('select[name="remote_router_distinguisher"]').disabled = false;
+    document.querySelector('select[name="remote_router_vrf"]').disabled = false;
+    document.querySelector('select[name="remote_access_uplink-port"]').disabled = false;
 
 })
 
@@ -353,6 +369,9 @@ function cal_interface(event) {
                     uplinkPortsHTML = uplinkPortsHTML + `<option value="${port}" >${port}</option>\n`;
                 }
                 uplinkPortSelect.innerHTML = uplinkPortsHTML
+                if (data['uplink-ports'].length == 1) {
+                    uplinkPortSelect.disabled = true
+                }
 
                 let aggregationPortsHTML = '';
                 for (let i = 0; i < data['aggregation-ports'].length; i++) {
@@ -360,6 +379,9 @@ function cal_interface(event) {
                     aggregationPortsHTML = aggregationPortsHTML + `<option value="${port}" >${port}</option>\n`;
                 }
                 aggregationPortSelect.innerHTML = aggregationPortsHTML
+                if (data['aggregation-ports'].length == 1) {
+                    aggregationPortSelect.disabled = true
+                }
 
                 let routeDistinguisherHTML = '';
                 for (let i = 0; i < data['route-distinguisher'].length; i++) {
@@ -367,6 +389,9 @@ function cal_interface(event) {
                     routeDistinguisherHTML = routeDistinguisherHTML + `<option value="${route}" >${route}</option>\n`;
                 }
                 routeDistinguisherSelect.innerHTML = routeDistinguisherHTML
+                if (data['route-distinguisher'].length == 1) {
+                    routeDistinguisherSelect.disabled = true
+                }
 
                 let vrfTargetHTML = '';
                 for (let i = 0; i < data['vrf-target'].length; i++) {
@@ -374,11 +399,14 @@ function cal_interface(event) {
                     vrfTargetHTML = vrfTargetHTML + `<option value="${vrf}" >${vrf}</option>\n`;
                 }
                 vrfTargetSelect.innerHTML = vrfTargetHTML
+                if (data['vrf-target'].length == 1) {
+                    vrfTargetSelect.disabled = true
+                }
 
             })
         })
     } else {
-        alert("please select the other router/switch")
+        alert("please select the other primary router/switch")
     }
 
 }
@@ -457,6 +485,9 @@ function cal_remote_interface(event) {
                     uplinkPortsHTML = uplinkPortsHTML + `<option value="${port}" >${port}</option>\n`;
                 }
                 uplinkPortSelect.innerHTML = uplinkPortsHTML
+                if (data['uplink-ports'].length == 1) {
+                    uplinkPortSelect.disabled = true
+                }
 
                 let aggregationPortsHTML = '';
                 for (let i = 0; i < data['aggregation-ports'].length; i++) {
@@ -464,6 +495,9 @@ function cal_remote_interface(event) {
                     aggregationPortsHTML = aggregationPortsHTML + `<option value="${port}" >${port}</option>\n`;
                 }
                 aggregationPortSelect.innerHTML = aggregationPortsHTML
+                if (data['aggregation-ports'].length == 1) {
+                    aggregationPortSelect.disabled = true
+                }
 
                 let routeDistinguisherHTML = '';
                 for (let i = 0; i < data['route-distinguisher'].length; i++) {
@@ -471,16 +505,20 @@ function cal_remote_interface(event) {
                     routeDistinguisherHTML = routeDistinguisherHTML + `<option value="${route}" >${route}</option>\n`;
                 }
                 routeDistinguisherSelect.innerHTML = routeDistinguisherHTML
+                if (data['route-distinguisher'].length == 1) {
+                    routeDistinguisherSelect.disabled = true
+                }
 
                 let vrfTargetHTML = '';
                 let vrf = hubVRF.value
                 vrfTargetHTML = vrfTargetHTML + `<option value="${vrf}" >${vrf}</option>\n`;
                 vrfTargetSelect.innerHTML = vrfTargetHTML
+                vrfTargetSelect.disabled = true
 
             })
         })
     } else {
-        alert("please select the other router/switch")
+        alert("please select the other remote router/switch")
     }
 
 }

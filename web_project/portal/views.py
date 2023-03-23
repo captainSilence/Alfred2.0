@@ -650,10 +650,17 @@ def api_get_all_interfaces(request):
             settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
         eds_ip = response.json()['tailf-ned-cienacli-acos:ip'].split('/')[0]
 
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/set/gateway'
+        # get router MGMT ip
+        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/config/junos:configuration/interfaces/interface=irb/unit=800/family/inet/address'
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
             settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
-        car_ip = response.json()['tailf-ned-cienacli-acos:gateway']
+        if response.status_code == 200:
+            car_ip = response.json()['junos:address'][0]['name'].split('/')[0]
+        else: 
+            url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/set/gateway'
+            response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
+                settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
+            car_ip = response.json()['tailf-ned-cienacli-acos:gateway']
 
         url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:vlan/add/vlan=666'
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
@@ -739,10 +746,17 @@ def api_get_all_epl_interfaces(request):
             settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
         eds_ip = response.json()['tailf-ned-cienacli-acos:ip'].split('/')[0]
 
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/set/gateway'
+        # get router MGMT ip
+        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/config/junos:configuration/interfaces/interface=irb/unit=800/family/inet/address'
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
             settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
-        car_ip = response.json()['tailf-ned-cienacli-acos:gateway']
+        if response.status_code == 200:
+            car_ip = response.json()['junos:address'][0]['name'].split('/')[0]
+        else: 
+            url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/set/gateway'
+            response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
+                settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
+            car_ip = response.json()['tailf-ned-cienacli-acos:gateway']
 
         url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:vlan/add/vlan=666'
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
@@ -855,7 +869,7 @@ def calculate_access_uplink(eds_ip, acx_ip):
     stdin, stdout, stderr = child.exec_command(f'flow mac-addr show mac {mac}')
     string = stdout.read().decode('ascii').strip("\n")
     uplinkport = re.search(
-        f"\|\s+{mac}\s\|\s+(.+?)\s+\|", string, re.IGNORECASE).group(1)
+        f"800\s*\|\s+{mac}\s\|\s+(.+?)\s+\|", string, re.IGNORECASE).group(1)
     execute_Time = time.time() - startTime
     print("Request completed in {0:.0f}s".format(execute_Time))
     return uplinkport
