@@ -256,18 +256,37 @@ class crq_ticket:
         self.ticket_no = self.create_crq(summary, description)
         self.changeCRQstatus(self.ticket_no, "Request For Authorization")
         print("Done with: Request For Authorization")
+
         time.sleep(12)
-        self.changeCRQstatus(self.ticket_no, "Scheduled For Review")
+        try:
+            self.changeCRQstatus(self.ticket_no, "Scheduled For Review")
+        except:
+            time.sleep(10)
+            self.changeCRQstatus(self.ticket_no, "Scheduled For Review")
         print("Done with: Scheduled FOR Review")
+
         time.sleep(10)
-        self.changeCRQstatus(self.ticket_no, "Scheduled")
+        try:
+            self.changeCRQstatus(self.ticket_no, "Scheduled")
+        except:
+            time.sleep(5)
+            self.changeCRQstatus(self.ticket_no, "Scheduled")
         print("Done with: Scheduled")
+
         time.sleep(10)
-        self.changeCRQstatus(self.ticket_no, "Implementation In Progress")
+        try:
+            self.changeCRQstatus(self.ticket_no, "Implementation In Progress")
+        except:
+            time.sleep(5)
+            self.changeCRQstatus(self.ticket_no, "Implementation In Progress")
         print("Done with: Implementation In Progress")
 
         time.sleep(10)
-        self.completeCRQstatus(self.ticket_no, "Completed")
+        try:
+            self.completeCRQstatus(self.ticket_no, "Completed")
+        except:
+            time.sleep(5)
+            self.completeCRQstatus(self.ticket_no, "Completed")
         print("Done with: Completed")
 
 

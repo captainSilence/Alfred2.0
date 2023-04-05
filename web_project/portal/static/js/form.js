@@ -1,6 +1,7 @@
 const formFieldsDict = {
-    "customer_name": "Customer Name",
+    "customer_name": "Account #",
     "vlan_number": "VLAN",
+    "sysname": "System Name",
     "access_device-name": "Switch",
     "access_access-port": "Port to Customer",
     "access_uplink-port": "Port to Router",
@@ -110,6 +111,7 @@ function validateForm(event) {
 
     } else {
         event.preventDefault();
+        enableSelectBox();
         renderModal();
     }
 }
@@ -145,21 +147,20 @@ confirmationModalSubmit.addEventListener('click', () => {
 
     document.querySelector('#confirmation-modal-submit').disabled = true;
     document.querySelector('#confirmation-modal-cancel').disabled = true;
-    document.querySelector('select[name="access_device-name"]').disabled = false;
-    document.querySelector('select[name="aggregation_device-name"]').disabled = false;
-    document.querySelector('select[name="access_uplink-port"]').disabled = false;
-    document.querySelector('select[name="aggregation_access-interface"]').disabled = false;
+    enableSelectBox()
     debugger;
     let form = document.querySelector('#dia-form');
     form.submit();
 })
+
+let confirmationModalCancel = document.querySelector('#confirmation-modal-cancel');
+confirmationModalCancel.addEventListener('click', disableSelectBox)
 
 // Clear Button
 let clearButton = document.querySelector('#clear-form-button');
 clearButton.addEventListener('click', () => {
     let form = document.querySelector('#dia-form');
     form.reset();
-
     let customerInput = document.querySelector('input[name="customer_name"]')
     let vlanInput = document.querySelector('input[name="vlan_number"]')
     let checkBox = document.querySelector('input[name="reserve_ip"]')
@@ -174,13 +175,22 @@ clearButton.addEventListener('click', () => {
     vlanInput.removeAttribute('readonly', 'readonly')
     address.innerHTML = ""
     address.hidden = true
+    enableSelectBox()
+})
 
+function enableSelectBox() {
     document.querySelector('select[name="access_device-name"]').disabled = false;
     document.querySelector('select[name="aggregation_device-name"]').disabled = false;
     document.querySelector('select[name="access_uplink-port"]').disabled = false;
     document.querySelector('select[name="aggregation_access-interface"]').disabled = false;
-})
+}
 
+function disableSelectBox() {
+    document.querySelector('select[name="access_device-name"]').disabled = true;
+    document.querySelector('select[name="aggregation_device-name"]').disabled = true;
+    // document.querySelector('select[name="access_uplink-port"]').disabled = true;
+    // document.querySelector('select[name="aggregation_access-interface"]').disabled = true;
+}
 
 // Query customer Address
 function queryCustomerAddress() {

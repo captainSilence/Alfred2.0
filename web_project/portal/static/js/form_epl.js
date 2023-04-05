@@ -170,6 +170,7 @@ function validateForm(event) {
 
     } else {
         event.preventDefault();
+        enableSelectBox();
         renderModal();
     }
 }
@@ -205,29 +206,20 @@ confirmationModalSubmit.addEventListener('click', () => {
 
     document.querySelector('#confirmation-modal-submit').disabled = true;
     document.querySelector('#confirmation-modal-cancel').disabled = true;
-    document.querySelector('select[name="access_device-name"]').disabled = false;
-    document.querySelector('select[name="aggregation_device-name"]').disabled = false;
-    document.querySelector('select[name="remote_access_device-name"]').disabled = false;
-    document.querySelector('select[name="remote_aggregation_device-name"]').disabled = false;
-    document.querySelector('select[name="primary_router_downlink"]').disabled = false;
-    document.querySelector('select[name="primary_router_distinguisher"]').disabled = false;
-    document.querySelector('select[name="primary_router_vrf"]').disabled = false;
-    document.querySelector('select[name="access_uplink-port"]').disabled = false;
-    document.querySelector('select[name="remote_router_downlink"]').disabled = false;
-    document.querySelector('select[name="remote_router_distinguisher"]').disabled = false;
-    document.querySelector('select[name="remote_router_vrf"]').disabled = false;
-    document.querySelector('select[name="remote_access_uplink-port"]').disabled = false;
+    enableSelectBox()
     debugger;
     let form = document.querySelector('#dia-form');
     form.submit();
 })
+
+let confirmationModalCancel = document.querySelector('#confirmation-modal-cancel');
+confirmationModalCancel.addEventListener('click', disableSelectBox)
 
 // Clear Button
 let clearButton = document.querySelector('#clear-form-button');
 clearButton.addEventListener('click', () => {
     let form = document.querySelector('#dia-form');
     form.reset();
-
     let customerInput = document.querySelector('input[name="customer_name"]')
     let vlanInput = document.querySelector('input[name="vlan_number"]')
     let address = document.getElementById('customer_address')
@@ -244,7 +236,10 @@ clearButton.addEventListener('click', () => {
     vlanInput.removeAttribute('readonly', 'readonly')
     address.innerHTML = ""
     address.hidden = true
+    enableSelectBox()
+})
 
+function enableSelectBox() {
     document.querySelector('select[name="access_device-name"]').disabled = false;
     document.querySelector('select[name="aggregation_device-name"]').disabled = false;
     document.querySelector('select[name="remote_access_device-name"]').disabled = false;
@@ -257,9 +252,22 @@ clearButton.addEventListener('click', () => {
     document.querySelector('select[name="remote_router_distinguisher"]').disabled = false;
     document.querySelector('select[name="remote_router_vrf"]').disabled = false;
     document.querySelector('select[name="remote_access_uplink-port"]').disabled = false;
+}
 
-})
-
+function disableSelectBox() {
+    document.querySelector('select[name="access_device-name"]').disabled = true;
+    document.querySelector('select[name="aggregation_device-name"]').disabled = true;
+    document.querySelector('select[name="remote_access_device-name"]').disabled = true;
+    document.querySelector('select[name="remote_aggregation_device-name"]').disabled = true;
+    // document.querySelector('select[name="primary_router_downlink"]').disabled = true;
+    document.querySelector('select[name="primary_router_distinguisher"]').disabled = true;
+    document.querySelector('select[name="primary_router_vrf"]').disabled = true;
+    // document.querySelector('select[name="access_uplink-port"]').disabled = true;
+    // document.querySelector('select[name="remote_router_downlink"]').disabled = true;
+    document.querySelector('select[name="remote_router_distinguisher"]').disabled = true;
+    document.querySelector('select[name="remote_router_vrf"]').disabled = true;
+    // document.querySelector('select[name="remote_access_uplink-port"]').disabled = true;
+}
 
 // Query customer Address
 function queryCustomerAddress() {
