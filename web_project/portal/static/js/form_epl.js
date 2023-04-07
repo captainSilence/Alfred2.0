@@ -2,15 +2,19 @@ const formFieldsDict = {
     "customer_account": "Account #",
     "customer_name": "Customer Name",
     "vlan_number": "VLAN",
-    "primary_router_downlink": "Hub router downlink",
-    "primary_router_distinguisher": "Hub router distinguisher",
-    "primary_router_vrf": "Hub router vrf",
-    "access_access-port": "Hub switch access-port",
-    "access_uplink-port": "Hub switch uplink-port",
-    "remote_router_downlink": "Remote router downlink",
-    "remote_router_distinguisher": "Remote router distinguisher",
-    "remote_router_vrf": "Remote router vrf",
-    "remote_access_uplink-port": "Remote switch uplink-port"
+    "primary_router_downlink": "Hub Router downlink",
+    "primary_router_distinguisher": "Hub Router distinguisher",
+    "primary_router_vrf": "Hub Router vrf",
+    "access_access-port": "Hub Switch access-port",
+    "access_uplink-port": "Hub Switch uplink-port",
+    "remote_router_downlink": "Remote Router downlink",
+    "remote_router_distinguisher": "Remote Router distinguisher",
+    "remote_router_vrf": "Remote Router vrf",
+    "remote_access_uplink-port": "Remote Switch uplink-port",
+    "aggregation_device-name": "Hub Router",
+    "access_device-name": "Hub Switch",
+    "remote_aggregation_device-name": "Remote Router",
+    "remote_access_device-name": "Remote Switch"
 }
 
 let ipAddrAndMask = {}

@@ -11,6 +11,7 @@ from django.conf import settings
 from collections import defaultdict
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from concurrent.futures import ThreadPoolExecutor
 from . import crq_ticket_class
 import smtplib
 import requests
@@ -595,7 +596,7 @@ def api_get_access_interfaces(request):
     return JsonResponse(json_response)
 
 
-# not in use, see get_all_interfaces function
+# not in use, testing only, see get_all_interfaces function
 @require_POST
 @login_required(login_url='/login')
 @api_view(['POST'])
@@ -616,6 +617,7 @@ def api_get_aggregation_interfaces(request):
     return JsonResponse(json_response)
 
 
+# DIA get uplink/downlink ports for router and switch
 @require_POST
 @login_required(login_url='/login')
 @api_view(['POST'])
@@ -632,19 +634,17 @@ def api_get_all_interfaces(request):
     json_response = {"access-ports": [],
                      "uplink-ports": [], "aggregation-ports": []}
     headers = {"Content-Type": "application/yang-data+json"}
+    startTime = time.time()
 
     if switch != '' and router != '':
+
         # API to sync the devices
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/sync-from'
-        response = requests.request('POST', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
-        print(response.json())
+        pool = ThreadPoolExecutor(max_workers=2)
+        pool.submit(sync_from, router)
+        pool.submit(sync_from, switch)
+        pool.shutdown(wait=True)
 
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/sync-from'
-        response = requests.request('POST', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
-        print(response.json())
-
+        # get switch ip
         url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/remote/set/ip'
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
             settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
@@ -692,14 +692,18 @@ def api_get_all_interfaces(request):
         for port in response['junos:interfaces']['interface']:
             ports.append(port['name'])
 
+        pool = ThreadPoolExecutor(max_workers=2)
+        future_uplink = pool.submit(calculate_access_uplink, eds_ip, car_ip)
+        future_downlink = pool.submit(calculate_agg_downlink, eds_ip, car_ip)
+        pool.shutdown(wait=True)
         try:
-            uplink_port.append(calculate_access_uplink(eds_ip, car_ip))
+            uplink_port.append(future_uplink.result())
         except:
             uplink_port = all_access_ports
         json_response["uplink-ports"] = uplink_port
 
         try:
-            downlink_port.append(calculate_agg_downlink(eds_ip, car_ip))
+            downlink_port.append(future_downlink.result())
         except:
             downlink_port = ports
         json_response["aggregation-ports"] = downlink_port
@@ -707,10 +711,13 @@ def api_get_all_interfaces(request):
     else:
         response = {}
 
+    execute_Time = time.time() - startTime
+    print("Request completed in {0:.0f}s".format(execute_Time))
     print(json_response)
     return JsonResponse(json_response)
 
 
+## EPL get uplink/downlink ports for router and switch
 @require_POST
 @login_required(login_url='/login')
 @api_view(['POST'])
@@ -728,19 +735,17 @@ def api_get_all_epl_interfaces(request):
     json_response = {"access-ports": [], "uplink-ports": [],
                      "aggregation-ports": [], "route-distinguisher": [], "vrf-target": []}
     headers = {"Content-Type": "application/yang-data+json"}
+    startTime = time.time()
 
     if switch != '' and router != '':
+
         # API to sync the devices
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/sync-from'
-        response = requests.request('POST', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
-        print(response.json())
+        pool = ThreadPoolExecutor(max_workers=2)
+        pool.submit(sync_from, router)
+        pool.submit(sync_from, switch)
+        pool.shutdown(wait=True)
 
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/sync-from'
-        response = requests.request('POST', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
-        print(response.json())
-
+        # get switch ip
         url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/remote/set/ip'
         response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
             settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
@@ -788,25 +793,32 @@ def api_get_all_epl_interfaces(request):
         for port in response['junos:interfaces']['interface']:
             ports.append(port['name'])
 
+        pool = ThreadPoolExecutor(max_workers=4)
+        future_uplink = pool.submit(calculate_access_uplink, eds_ip, car_ip)
+        future_downlink = pool.submit(calculate_agg_downlink, eds_ip, car_ip)
+        future_route_distinguisher = pool.submit(calculate_route_distinguisher, router, vlan)
+        future_vrf_target = pool.submit(calculate_vrf_target, router, vlan)
+        pool.shutdown(wait=True)
         try:
-            uplink_port.append(calculate_access_uplink(eds_ip, car_ip))
+            uplink_port.append(future_uplink.result())
         except:
             uplink_port = all_access_ports
         json_response["uplink-ports"] = uplink_port
 
         try:
-            downlink_port.append(calculate_agg_downlink(eds_ip, car_ip))
+            downlink_port.append(future_downlink.result())
         except:
             downlink_port = ports
         json_response["aggregation-ports"] = downlink_port
 
-        json_response["route-distinguisher"].append(
-            calculate_route_distinguisher(router, vlan))
-        json_response["vrf-target"].append(calculate_vrf_target(router, vlan))
+        json_response["route-distinguisher"].append(future_route_distinguisher.result())
+        json_response["vrf-target"].append(future_vrf_target.result())
 
     else:
         response = {}
 
+    execute_Time = time.time() - startTime
+    print("Request completed in {0:.0f}s".format(execute_Time))
     print(json_response)
     return JsonResponse(json_response)
 
@@ -857,7 +869,6 @@ def netmask_to_cidr(netmask):
 
 def calculate_access_uplink(eds_ip, acx_ip):
     print(eds_ip, acx_ip)
-    startTime = time.time()
     child = paramiko.SSHClient()
     child.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     child.connect(eds_ip, 22, settings.AD_USER, settings.AD_PASSWORD)
@@ -870,8 +881,7 @@ def calculate_access_uplink(eds_ip, acx_ip):
     string = stdout.read().decode('ascii').strip("\n")
     uplinkport = re.search(
         f"800\s*\|\s+{mac}\s\|\s+(.+?)\s+\|", string, re.IGNORECASE).group(1)
-    execute_Time = time.time() - startTime
-    print("Request completed in {0:.0f}s".format(execute_Time))
+
     return uplinkport
 
 
@@ -891,15 +901,12 @@ def calculate_agg_downlink(eds_ip, acx_ip):
     string = stdout.read().decode('ascii').strip("\n")
     outIntf = re.search(f"{mac}.+\s+\[*(\w+-\d+[\/]\d+[\/]\d+)", string)
     outIntfae = re.search(f"{mac}.+\s+\[*(ae\d+)", string)
-    # print(outIntf)
-    # print(outIntfae)
 
     if outIntf:
         downlink = outIntf.group(1)
-        # print(downlink)
     elif outIntfae:
         downlink = outIntfae.group(1)
-        # print(downlink)
+
     return downlink
 
 
@@ -987,6 +994,7 @@ def get_acc_number_by_name(customerName, vlan):
         return str('no ACC found')
 
 
+# for testing only
 @require_POST
 @login_required(login_url='/login')
 @api_view(['POST'])
@@ -1064,3 +1072,11 @@ def calculate_vrf_target(routerName, vlan):
     vrf_target = f'target:1{ospfCode}:{vlan}'
 
     return vrf_target
+
+
+def sync_from(device):
+    url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={device}/sync-from'
+    headers = {"Content-Type": "application/yang-data+json"}
+    response = requests.request('POST', url, headers=headers, auth=HTTPBasicAuth(
+        settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
+    print(response.json())
