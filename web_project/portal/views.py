@@ -79,14 +79,10 @@ def logout_request(request):
 @login_required(login_url='/login')
 def form(request):
     url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device-group=access/device-name'
-    headers = {"Content-Type": "application/yang-data+json"}
-    response_access = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-        settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
+    response_access = get_request(url)
 
     url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device-group=aggregation/device-name'
-    headers = {"Content-Type": "application/yang-data+json"}
-    response_aggregation = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-        settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
+    response_aggregation = get_request(url)
 
     try:
         response_json_acc = json.loads(response_access.text)
@@ -102,14 +98,10 @@ def form(request):
 @login_required(login_url='/login')
 def formepl(request):
     url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device-group=access/device-name'
-    headers = {"Content-Type": "application/yang-data+json"}
-    response_access = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-        settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
+    response_access = get_request(url)
 
     url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device-group=aggregation/device-name'
-    headers = {"Content-Type": "application/yang-data+json"}
-    response_aggregation = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-        settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
+    response_aggregation = get_request(url)
 
     try:
         response_json_acc = json.loads(response_access.text)
@@ -118,18 +110,16 @@ def formepl(request):
                   "aggregation": response_json_agg['tailf-ncs:device-name']}
     except Exception as e:
         print('Error', e)
-    # return render(request, 'form123.html', params)
+
     return render(request, 'formepl.html', params)
 
 
 @require_GET
 @login_required(login_url='/login')
 def table(request):
-    # Query NSO for services
+    # Query NSO for existing services
     url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:services/diaSingleHome:diaSingleHome'
-    headers = {"Content-Type": "application/yang-data+json"}
-    response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-        settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
+    response = get_request(url)
     params = {'data': []}
     try:
         response_json = json.loads(response.text)
@@ -145,10 +135,10 @@ def table(request):
             params_dict['plan'] = []
             params_dict['ticket'] = find_ticket_num(
                 entry['customer-name'], entry['vlan-number'])
-            # print(params_dict['ticket'])
+
             params_dict['customer_acc'] = get_acc_number_by_name(
                 entry['customer-name'], entry['vlan-number'])
-            # print(params_dict['customer_acc'])
+
             # Change [0] to [1] to include init component
             for state in entry['plan']['component'][0]['state']:
                 params_dict['plan'].append(state)
@@ -167,8 +157,7 @@ def table(request):
 def table_epl(request):
     # Query NSO for services
     url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:services/eplHubRemote:eplHubRemote'
-    headers = {"Content-Type": "application/yang-data+json"}
-    response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
+    response = get_request(url)
     params = {'data': []}
     try:
         response_json = json.loads(response.text)        
@@ -210,9 +199,6 @@ def device_config(request, customer_name, vlan_number):
               "access": {"EDS Switch": switch_config}}
     params = {'config': config, 'customer_name': customer_name,
               'vlan_number': vlan_number}
-    # print(router_config)
-    # removeSpace
-    # print(switch_config)
 
     return render(request, 'config.html', params)
 
@@ -234,8 +220,7 @@ def details(request, customer_name, vlan_number):
 
     # API Query NSO for services
     url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:services/diaSingleHome:diaSingleHome={customer_name},{vlan_number}'
-    service_response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-        settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
+    service_response = get_request(url)
     try:
         response_json = json.loads(service_response.text.replace('-', '_'))
         params = {'data': response_json['diaSingleHome:diaSingleHome'][0],
@@ -253,21 +238,17 @@ def details(request, customer_name, vlan_number):
 @require_GET
 @login_required(login_url='/login')
 def detailsepl(request, customer_name, vlan_number):
-    headers = {"Content-Type": "application/yang-data+json"}
-
     # API Query NSO for services
     url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:services/eplHubRemote:eplHubRemote={customer_name},{vlan_number}' 
-    service_response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
+    service_response = get_request(url)
+
     try:
         response_json = json.loads(service_response.text)
         params = {'data': response_json['eplHubRemote:eplHubRemote'][0], 'customer_name': customer_name, 'vlan_number': vlan_number, 'log_entry': False}
-    
-
     except Exception as e:
         print('Error', e)
         return redirect(f'/error/{e}')
 
-    
     return render(request, 'detailsepl.html', params)
 
 
@@ -298,7 +279,6 @@ def submit(request):
     # Path NSO for services
     try:
         headers = {"Content-Type": "application/yang-data+json"}
-
         # API to remove pre-existant diaChecks object
         customer_name = data['customer-name']
         vlan_number = data['vlan-number']
@@ -400,7 +380,6 @@ def submit_epl(request):
     # Path NSO for services
     try:
         headers = {"Content-Type": "application/yang-data+json"}
-
         # API to create service instance
         url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:services/eplHubRemote:eplHubRemote'
         response = requests.request('PATCH', url, headers=headers, auth=HTTPBasicAuth(
@@ -572,17 +551,13 @@ def api_get_access_interfaces(request):
 
     if device != '':
         url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={device}/config/tailf-ned-cienacli-acos:vlan/add/vlan=666'
-        headers = {"Content-Type": "application/yang-data+json"}
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
+        response = get_request(url).json()
 
         for port in response["tailf-ned-cienacli-acos:vlan"][0]['port']:
             vlan666_ports.append(port['id'])
 
         url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={device}/config/tailf-ned-cienacli-acos:port/tailf-ned-cienacli-acos:set'
-        headers = {"Content-Type": "application/yang-data+json"}
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
+        response = get_request(url).json()
 
         for port_dict in response["tailf-ned-cienacli-acos:set"]['port']:
             if port_is_access(port_dict, vlan666_ports) == True:
@@ -606,9 +581,7 @@ def api_get_aggregation_interfaces(request):
     json_response = {"aggregation-ports": []}
     if device != '':
         url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={device}/config/junos:configuration/junos:interfaces'
-        headers = {"Content-Type": "application/yang-data+json"}
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
+        response = get_request(url).json()
         for port_dict in response["junos:interfaces"]['interface']:
             if port_is_aggregatrion(port_dict) == True:
                 json_response["aggregation-ports"].append(port_dict["name"])
@@ -631,81 +604,85 @@ def api_get_all_interfaces(request):
     uplink_port = []
     downlink_port = []
     ports = []
-    json_response = {"access-ports": [],
-                     "uplink-ports": [], "aggregation-ports": []}
-    headers = {"Content-Type": "application/yang-data+json"}
+    json_response = {"access-ports": [], "uplink-ports": [], "aggregation-ports": []}
+    url_eds_ip = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/remote/set/ip'
+    url_car_ip = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/config/junos:configuration/interfaces/interface=irb/unit=800/family/inet/address'
+    url_all_vlan666 = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:vlan/add/vlan=666'
+    url_vlan666_removed = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:vlan/remove/vlan=666'
+    url_all_switch_ports = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:port/tailf-ned-cienacli-acos:set'
+    url_all_router_ports = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/config/junos:configuration/interfaces'
     startTime = time.time()
 
     if switch != '' and router != '':
 
         # API to sync the devices
-        pool = ThreadPoolExecutor(max_workers=2)
-        pool.submit(sync_from, router)
-        pool.submit(sync_from, switch)
-        pool.shutdown(wait=True)
+        with ThreadPoolExecutor() as pool:
+            pool.submit(sync_from, router)
+            pool.submit(sync_from, switch)
 
-        # get switch ip
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/remote/set/ip'
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
-        eds_ip = response.json()['tailf-ned-cienacli-acos:ip'].split('/')[0]
 
-        # get router MGMT ip
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/config/junos:configuration/interfaces/interface=irb/unit=800/family/inet/address'
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
-        if response.status_code == 200:
-            car_ip = response.json()['junos:address'][0]['name'].split('/')[0]
-        else: 
-            url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/set/gateway'
-            response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-                settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
-            car_ip = response.json()['tailf-ned-cienacli-acos:gateway']
+        with ThreadPoolExecutor() as pool:
+            future_eds_ip = pool.submit(get_request, url_eds_ip)
+            future_car_ip = pool.submit(get_request, url_car_ip)
+            future_all_vlan666 = pool.submit(get_request, url_all_vlan666)
+            future_vlan666_removed = pool.submit(get_request, url_vlan666_removed)
+            future_all_switch_ports = pool.submit(get_request, url_all_switch_ports)
+            future_all_router_ports = pool.submit(get_request, url_all_router_ports)
 
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:vlan/add/vlan=666'
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
-        if response.status_code == 200:
+            # get switch ip
+            response = future_eds_ip.result()
+            eds_ip = response.json()['tailf-ned-cienacli-acos:ip'].split('/')[0]
+
+            # get router MGMT ip
+            response = future_car_ip.result()
+            if response.status_code == 200:
+                car_ip = response.json()['junos:address'][0]['name'].split('/')[0]
+            else: 
+                url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/set/gateway'
+                response = get_request(url)
+                car_ip = response.json()['tailf-ned-cienacli-acos:gateway']
+
+            # get all vlan 666 ports
+            response = future_all_vlan666.result()
             for port in response.json()["tailf-ned-cienacli-acos:vlan"][0]['port']:
                 vlan666_ports.append(port['id'])
 
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:vlan/remove/vlan=666'
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
-        if response.status_code == 200:
-            for port in response.json()["tailf-ned-cienacli-acos:vlan"][0]['port']:
-                ports_removed_from_vlan666.append(port['id'])
+            # get all ports are remved from vlan 666
+            response = future_vlan666_removed.result()
+            if response.status_code == 200:
+                for port in response.json()["tailf-ned-cienacli-acos:vlan"][0]['port']:
+                    ports_removed_from_vlan666.append(port['id'])
 
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:port/tailf-ned-cienacli-acos:set'
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
-        for port_dict in response["tailf-ned-cienacli-acos:set"]['port']:
-            if port_is_access(port_dict, vlan666_ports) == True and remove_port_from_vlan666(port_dict, ports_removed_from_vlan666) == True:
-                json_response["access-ports"].append(port_dict["name"])
+            # get all ports from switch
+            response = future_all_switch_ports.result()
+            for port_dict in response.json()["tailf-ned-cienacli-acos:set"]['port']:
+                if port_is_access(port_dict, vlan666_ports) == True and remove_port_from_vlan666(port_dict, ports_removed_from_vlan666) == True:
+                    json_response["access-ports"].append(port_dict["name"])
 
-            all_access_ports.append(port_dict["name"])
+                all_access_ports.append(port_dict["name"])
 
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/config/junos:configuration/interfaces'
-        headers = {"Content-Type": "application/yang-data+json"}
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
-        for port in response['junos:interfaces']['interface']:
-            ports.append(port['name'])
+            # get all ports from router
+            response = future_all_router_ports.result()
+            for port in response.json()['junos:interfaces']['interface']:
+                ports.append(port['name'])
 
-        pool = ThreadPoolExecutor(max_workers=2)
-        future_uplink = pool.submit(calculate_access_uplink, eds_ip, car_ip)
-        future_downlink = pool.submit(calculate_agg_downlink, eds_ip, car_ip)
-        pool.shutdown(wait=True)
-        try:
-            uplink_port.append(future_uplink.result())
-        except:
-            uplink_port = all_access_ports
+
+        # calculate uplink/downlink ports
+        with ThreadPoolExecutor() as pool:
+            future_uplink = pool.submit(calculate_access_uplink, eds_ip, car_ip)
+            future_downlink = pool.submit(calculate_agg_downlink, eds_ip, car_ip)
+            pool.shutdown(wait=True)
+            try:
+                uplink_port.append(future_uplink.result())
+            except:
+                uplink_port = all_access_ports
+            
+            try:
+                downlink_port.append(future_downlink.result())
+            except:
+                downlink_port = ports
+
         json_response["uplink-ports"] = uplink_port
-
-        try:
-            downlink_port.append(future_downlink.result())
-        except:
-            downlink_port = ports
         json_response["aggregation-ports"] = downlink_port
 
     else:
@@ -732,87 +709,89 @@ def api_get_all_epl_interfaces(request):
     uplink_port = []
     downlink_port = []
     ports = []
-    json_response = {"access-ports": [], "uplink-ports": [],
-                     "aggregation-ports": [], "route-distinguisher": [], "vrf-target": []}
-    headers = {"Content-Type": "application/yang-data+json"}
+    json_response = {"access-ports": [], "uplink-ports": [], "aggregation-ports": [], "route-distinguisher": [], "vrf-target": []}
+    url_eds_ip = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/remote/set/ip'
+    url_car_ip = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/config/junos:configuration/interfaces/interface=irb/unit=800/family/inet/address'
+    url_all_vlan666 = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:vlan/add/vlan=666'
+    url_vlan666_removed = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:vlan/remove/vlan=666'
+    url_all_switch_ports = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:port/tailf-ned-cienacli-acos:set'
+    url_all_router_ports = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/config/junos:configuration/interfaces'
     startTime = time.time()
 
     if switch != '' and router != '':
 
         # API to sync the devices
-        pool = ThreadPoolExecutor(max_workers=2)
-        pool.submit(sync_from, router)
-        pool.submit(sync_from, switch)
-        pool.shutdown(wait=True)
+        with ThreadPoolExecutor() as pool:
+            pool.submit(sync_from, router)
+            pool.submit(sync_from, switch)
 
-        # get switch ip
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/remote/set/ip'
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
-        eds_ip = response.json()['tailf-ned-cienacli-acos:ip'].split('/')[0]
 
-        # get router MGMT ip
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/config/junos:configuration/interfaces/interface=irb/unit=800/family/inet/address'
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
-        if response.status_code == 200:
-            car_ip = response.json()['junos:address'][0]['name'].split('/')[0]
-        else: 
-            url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/set/gateway'
-            response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-                settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
-            car_ip = response.json()['tailf-ned-cienacli-acos:gateway']
+        with ThreadPoolExecutor() as pool:
+            future_eds_ip = pool.submit(get_request, url_eds_ip)
+            future_car_ip = pool.submit(get_request, url_car_ip)
+            future_all_vlan666 = pool.submit(get_request, url_all_vlan666)
+            future_vlan666_removed = pool.submit(get_request, url_vlan666_removed)
+            future_all_switch_ports = pool.submit(get_request, url_all_switch_ports)
+            future_all_router_ports = pool.submit(get_request, url_all_router_ports)
 
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:vlan/add/vlan=666'
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
-        if response.status_code == 200:
+            # get switch ip
+            response = future_eds_ip.result()
+            eds_ip = response.json()['tailf-ned-cienacli-acos:ip'].split('/')[0]
+
+            # get router MGMT ip
+            response = future_car_ip.result()
+            if response.status_code == 200:
+                car_ip = response.json()['junos:address'][0]['name'].split('/')[0]
+            else: 
+                url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/set/gateway'
+                response = get_request(url)
+                car_ip = response.json()['tailf-ned-cienacli-acos:gateway']
+
+            # get all vlan 666 ports
+            response = future_all_vlan666.result()
             for port in response.json()["tailf-ned-cienacli-acos:vlan"][0]['port']:
                 vlan666_ports.append(port['id'])
 
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:vlan/remove/vlan=666'
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
-        if response.status_code == 200:
-            for port in response.json()["tailf-ned-cienacli-acos:vlan"][0]['port']:
-                ports_removed_from_vlan666.append(port['id'])
+            # get all ports are remved from vlan 666
+            response = future_vlan666_removed.result()
+            if response.status_code == 200:
+                for port in response.json()["tailf-ned-cienacli-acos:vlan"][0]['port']:
+                    ports_removed_from_vlan666.append(port['id'])
 
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:port/tailf-ned-cienacli-acos:set'
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
-        for port_dict in response["tailf-ned-cienacli-acos:set"]['port']:
-            if port_is_access(port_dict, vlan666_ports) == True and remove_port_from_vlan666(port_dict, ports_removed_from_vlan666) == True:
-                json_response["access-ports"].append(port_dict["name"])
+            # get all ports from switch
+            response = future_all_switch_ports.result()
+            for port_dict in response.json()["tailf-ned-cienacli-acos:set"]['port']:
+                if port_is_access(port_dict, vlan666_ports) == True and remove_port_from_vlan666(port_dict, ports_removed_from_vlan666) == True:
+                    json_response["access-ports"].append(port_dict["name"])
 
-            all_access_ports.append(port_dict["name"])
+                all_access_ports.append(port_dict["name"])
 
-        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/config/junos:configuration/interfaces'
-        headers = {"Content-Type": "application/yang-data+json"}
-        response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
-        for port in response['junos:interfaces']['interface']:
-            ports.append(port['name'])
+            # get all ports from router
+            response = future_all_router_ports.result()
+            for port in response.json()['junos:interfaces']['interface']:
+                ports.append(port['name'])
 
-        pool = ThreadPoolExecutor(max_workers=4)
-        future_uplink = pool.submit(calculate_access_uplink, eds_ip, car_ip)
-        future_downlink = pool.submit(calculate_agg_downlink, eds_ip, car_ip)
-        future_route_distinguisher = pool.submit(calculate_route_distinguisher, router, vlan)
-        future_vrf_target = pool.submit(calculate_vrf_target, router, vlan)
-        pool.shutdown(wait=True)
-        try:
-            uplink_port.append(future_uplink.result())
-        except:
-            uplink_port = all_access_ports
-        json_response["uplink-ports"] = uplink_port
 
-        try:
-            downlink_port.append(future_downlink.result())
-        except:
-            downlink_port = ports
-        json_response["aggregation-ports"] = downlink_port
+        # calculate uplink/downlink ports
+        with ThreadPoolExecutor() as pool:
+            future_uplink = pool.submit(calculate_access_uplink, eds_ip, car_ip)
+            future_downlink = pool.submit(calculate_agg_downlink, eds_ip, car_ip)
+            future_route_distinguisher = pool.submit(calculate_route_distinguisher, router, vlan)
+            future_vrf_target = pool.submit(calculate_vrf_target, router, vlan)
+            try:
+                uplink_port.append(future_uplink.result())
+            except:
+                uplink_port = all_access_ports
+            
+            try:
+                downlink_port.append(future_downlink.result())
+            except:
+                downlink_port = ports
 
-        json_response["route-distinguisher"].append(future_route_distinguisher.result())
-        json_response["vrf-target"].append(future_vrf_target.result())
+            json_response["uplink-ports"] = uplink_port
+            json_response["aggregation-ports"] = downlink_port
+            json_response["route-distinguisher"].append(future_route_distinguisher.result())
+            json_response["vrf-target"].append(future_vrf_target.result())
 
     else:
         response = {}
@@ -861,7 +840,6 @@ def pyodbc_query(cursor, query):
 
 
 def netmask_to_cidr(netmask):
-
     # param netmask: netmask ip addr (eg: 255.255.255.0)
     # return: equivalent cidr number to given netmask ip (eg: 24)
     return sum([bin(int(x)).count('1') for x in netmask.split('.')])
@@ -893,9 +871,7 @@ def calculate_agg_downlink(eds_ip, acx_ip):
     stdin, stdout, stderr = child.exec_command(
         f'show arp no-resolve | match {eds_ip}')
     string = stdout.read().decode('ascii').strip("\n")
-    # print(string)
     mac = re.search(f"(\w+:\w+:\w+:\w+:\w+:\w+)\s+{eds_ip}", string).group(1)
-    # print(mac)
 
     stdin, stdout, stderr = child.exec_command(f'show arp | except em')
     string = stdout.read().decode('ascii').strip("\n")
@@ -1028,11 +1004,8 @@ def api_epl_get_all_info(request):
 def api_epl_get_remoteRouter_interfaces(request):
     router = request.data['remoteRouter']
     json_response = {"aggregation-ports": []}
-    headers = {"Content-Type": "application/yang-data+json"}
     url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/config/junos:configuration/interfaces'
-    headers = {"Content-Type": "application/yang-data+json"}
-    response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-        settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
+    response = get_request(url).json()
     for port in response['junos:interfaces']['interface']:
         json_response["aggregation-ports"].append(port['name'])
 
@@ -1050,11 +1023,8 @@ def get_vlan_name(customerName, hubRouterName, remoteRouterName, vlan):
 
 
 def calculate_route_distinguisher(routerName, vlan):
-    headers = {"Content-Type": "application/yang-data+json"}
     url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={routerName}/config/junos:configuration/interfaces/interface=lo0/unit=0/family/inet/address'
-    headers = {"Content-Type": "application/yang-data+json"}
-    response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-        settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
+    response = get_request(url).json()
     lo0_ip = response['junos:address'][0]['name'].split('/')[0]
     route_distinguisher = f'{lo0_ip}:{vlan}'
 
@@ -1062,11 +1032,8 @@ def calculate_route_distinguisher(routerName, vlan):
 
 
 def calculate_vrf_target(routerName, vlan):
-    headers = {"Content-Type": "application/yang-data+json"}
     url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={routerName}/config/junos:configuration/interfaces/interface=lo0/unit=0/family/inet/address'
-    headers = {"Content-Type": "application/yang-data+json"}
-    response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
-        settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False).json()
+    response = get_request(url).json()
     lo0_ip = response['junos:address'][0]['name'].split('/')[0]
     ospfCode = lo0_ip.split('.')[2].zfill(3)
     vrf_target = f'target:1{ospfCode}:{vlan}'
@@ -1080,3 +1047,13 @@ def sync_from(device):
     response = requests.request('POST', url, headers=headers, auth=HTTPBasicAuth(
         settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
     print(response.json())
+
+
+def get_request(url):
+    headers = {"Content-Type": "application/yang-data+json"}
+    url = url
+    response = requests.request('GET', url, headers=headers, auth=HTTPBasicAuth(
+        settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
+    
+    return response
+    
