@@ -1,0 +1,32 @@
+<config-template xmlns="http://tail-f.com/ns/config/1.0">
+  <devices xmlns="http://tail-f.com/ns/ncs">
+    <device>
+      <name>{$DEVICE_NAME}</name>
+      <config>
+        <vlan xmlns="http://tail-f.com/ned/cienacli-acos">
+          <!-- vlan creationg -->
+          <create>
+            <vlan>
+              <id>{$VLAN_NUMBER}</id>
+            </vlan>
+          </create>
+          <!-- adding vlans xxx to access and uplink ports -->
+          <add>
+            <vlan>
+              <id>{$VLAN_NUMBER}</id>
+              <port>
+                <id>{$UPLINK_PORT}</id>
+              </port>
+            </vlan>
+          </add>
+          <rename>
+            <vlan>
+              <id>{$VLAN_NUMBER}</id>
+              <name>{$CUSTOMER_NAME}</name>
+            </vlan>
+          </rename>
+        </vlan>
+      </config>
+    </device>
+  </devices>
+</config-template>

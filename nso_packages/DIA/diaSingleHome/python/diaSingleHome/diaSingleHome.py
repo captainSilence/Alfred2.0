@@ -131,6 +131,12 @@ class UpdateExternal(ncs.application.NanoService):
         cur = conn.cursor()
         # execute the INSERT statement
         cur.execute("update dia_test set ticket_number = %s where customer_name = %s and vlan = %s",(ticket_number, service.customer_name, service.vlan_number))
+        cur.execute(f"SELECT customer_acc_number FROM dia_test where customer_name = '{service.customer_name}' and vlan = {service.vlan_number};")
+        acc_num = cur.fetchone()
+        if acc_num == None:
+            acc_num = service.customer_name
+        else:
+            acc_num = acc_num[0]
         # commit the changes to the database
         conn.commit()
         # close the communication with the PostgresQL database
@@ -140,7 +146,7 @@ class UpdateExternal(ncs.application.NanoService):
         # update the ubrNetworks DB
         cnxn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password)
         cursor = cnxn.cursor()
-        cursor.execute('''update dbo.UbrNetworks set username = \'''' + service.customer_name + '''', ssu = 'FIBER', macadd = 'FIBER' where block =\'''' + service.aggregation.ipv4_address + "'")
+        cursor.execute('''update dbo.UbrNetworks set username = \'''' + acc_num + '''', ssu = 'FIBER', macadd = 'FIBER' where block =\'''' + service.aggregation.ipv4_address + "'")
         cnxn.commit()
         cnxn.close()
 

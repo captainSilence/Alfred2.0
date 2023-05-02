@@ -388,9 +388,18 @@ def submit_epl(request):
             request.session['error_message'] = response.text
             return redirect(f'/error')
 
+        # grab device config for the service instance
+        url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:services/eplHubRemote:eplHubRemote={vlan_name},{vlan}/get-modifications'
+        response = requests.request('POST', url, headers=headers, auth=HTTPBasicAuth(
+            settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
+        device_data = response.json()["eplHubRemote:output"]["cli"]["local-node"]["data"]
+        print(device_data)
+        
         # creating Remedy ticket for EPL service instance
-        summary = f"EPL Circuit provisioning for customer{customer_name} with vlan {vlan}."
+        new_line = '\n'
+        summary = f"EPL Circuit provisioning for customer {customer_name} with vlan {vlan}."
         description = f"Customer account: {customer_acc}, Vlan: {vlan}, Hub router: {hubRouter}, Hub switch: {hubSwitch}, Remote router: {remoteRouter}, Remote switch: {remoteSwitch}"
+        description = f"Customer account: {customer_acc}, Vlan: {vlan}{new_line}{new_line}{device_data}"
         object = crq_ticket_class.crq_ticket()
         object.cls_start(summary, description)
         ticket_number = object.ticket_no

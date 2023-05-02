@@ -12,7 +12,7 @@ filterElement.addEventListener('keyup', () => {
     filteredData = []     
     let filterString = filterElement.value.toUpperCase();
     for (key in data) {                
-        if (data[key].customer_name.toUpperCase().includes(filterString)) { 
+        if (data[key].customer_acc.toUpperCase().includes(filterString)) { 
             filteredData.push(data[key])            
         }
     }

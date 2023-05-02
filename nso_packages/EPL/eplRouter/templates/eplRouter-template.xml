@@ -1,0 +1,52 @@
+<config-template xmlns="http://tail-f.com/ns/config/1.0">
+  <devices xmlns="http://tail-f.com/ns/ncs">
+    <device>
+      <name>{$DEVICE_NAME}</name>
+      <config>
+        <configuration xmlns="http://xml.juniper.net/xnm/1.1/xnm">
+          <interfaces>
+            <interface>
+              <name>{$ACCESS_INTERFACE}</name>
+              <unit>
+                <name>{$VLAN_NUMBER}</name>
+                <description>{$CUSTOMER_NAME}</description>
+                <encapsulation>vlan-vpls</encapsulation>
+                <vlan-id>{$VLAN_NUMBER}</vlan-id>
+              </unit>
+            </interface>
+          </interfaces>
+
+          <routing-instances>
+            <instance>
+              <name>{$CUSTOMER_NAME}</name>
+              <instance-type>vpls</instance-type>
+              <interface>
+                <name>{$ACCESS_INTERFACE}.{$VLAN_NUMBER}</name>
+              </interface>
+              <route-distinguisher>
+                <rd-type>{$ROUTE_DISTINGUISHER}</rd-type>
+              </route-distinguisher>
+              <vrf-target>
+                <community>{$VRF_TARGET}</community>
+              </vrf-target>
+              <protocols>
+                <vpls>
+                  <site-range>20</site-range>
+                  <no-tunnel-services />
+                  <site>
+                    <name>{$SITE_NUMBER}</name>
+                    <site-identifier>{$SITE_NUMBER}</site-identifier>
+                    <site-preference>primary</site-preference>
+                  </site>
+                  <vpls-id>{$VLAN_NUMBER}</vpls-id>
+                  <mac-flush />
+                </vpls>
+              </protocols>
+            </instance>
+          </routing-instances>
+        </configuration>
+      </config>
+    </device>
+  </devices>
+</config-template>
+  
