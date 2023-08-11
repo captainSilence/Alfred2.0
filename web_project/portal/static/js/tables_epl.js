@@ -157,7 +157,7 @@ function renderTable(arrayData) {
         <td>${data[key].status}</td>\
         <td>${data[key].ticket}</td>\
         <td><a href="/detailsepl/${data[key].customer_name}/${data[key].vlan_number}"><input type="button" class="btn btn-primary" value="Details"></a></td>\
-        <td><a href="/config/${data[key].customer_name}/${data[key].vlan_number}"></a></td>`
+        <td><a href="/configepl/${data[key].customer_name}/${data[key].vlan_number}"><input type="button" class="btn btn-primary" value="Configuation"></a></td>`
         console.log(html)
         row.innerHTML = html
         tbody.appendChild(row)

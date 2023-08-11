@@ -183,6 +183,7 @@ def table_epl(request):
     return render(request, 'tableepl.html', params)
 
 
+# get each device config for DIA
 @require_GET
 @login_required(login_url='/login')
 def device_config(request, customer_name, vlan_number):
@@ -201,6 +202,55 @@ def device_config(request, customer_name, vlan_number):
               'vlan_number': vlan_number}
 
     return render(request, 'config.html', params)
+
+
+# get each device config for EPL
+@require_GET
+@login_required(login_url='/login')
+def device_config_epl(request, customer_name, vlan_number):
+    # get device name
+    url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:services/eplHubRemote:eplHubRemote={customer_name},{vlan_number}'
+    response = get_request(url).json()['eplHubRemote:eplHubRemote'][0]
+    accessSwitch = response['access']['device-name']
+    remoteSwitch = response['remoteAccess']['device-name']
+    hubRouter = response['hubRouter']['device-name']
+    remoteRouter = response['remoteRouter']['device-name']
+
+    hubDevices = [accessSwitch,  hubRouter]
+    remoteDevices = [remoteSwitch, remoteRouter]
+
+    # get config for each device
+    headers = {"Content-Type": "application/yang-data+json"}
+    url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:services/eplHubRemote:eplHubRemote={customer_name},{vlan_number}/get-modifications'
+    response = requests.request('POST', url, headers=headers, auth=HTTPBasicAuth(
+        settings.NSO_USERNAME, settings.NSO_PASSWORD), verify=False)
+    data = response.json()["eplHubRemote:output"]["cli"]["local-node"]["data"]
+    configs = [
+    removeSpace(data.split('device')[2].replace("{", "").replace("}", "")),
+    removeSpace(data.split('device')[3].replace("{", "").replace("}", "")), 
+    removeSpace(data.split('device')[4].replace("{", "").replace("}", "")),
+    removeSpace(data.split('device')[5].replace("{", "").replace("}", ""))
+    ]
+
+    allHubDevicesInfo = ''
+    allRemoteDevicesInfo = ''
+    for device in hubDevices:
+        for config in configs:
+            if device in config:
+                allHubDevicesInfo = allHubDevicesInfo + config
+
+    for device in remoteDevices:
+        for config in configs:
+            if device in config:
+                allRemoteDevicesInfo = allRemoteDevicesInfo + config
+
+
+    config = {"hub": {"Hub Site": allHubDevicesInfo},
+              "remote": {"Remote Site": allRemoteDevicesInfo}}
+    params = {'config': config, 'customer_name': customer_name,
+              'vlan_number': vlan_number}
+
+    return render(request, 'configepl.html', params)
 
 
 @require_GET
@@ -647,9 +697,11 @@ def api_get_all_interfaces(request):
             if response.status_code == 200:
                 car_ip = response.json()['junos:address'][0]['name'].split('/')[0]
             else: 
-                url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/set/gateway'
+                # url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/set/gateway'
+                url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/address'
                 response = get_request(url)
-                car_ip = response.json()['tailf-ned-cienacli-acos:gateway']
+                # car_ip = response.json()['tailf-ned-cienacli-acos:gateway']
+                car_ip = response.json()['tailf-ncs:address']
 
             # get all vlan 666 ports
             response = future_all_vlan666.result()
@@ -752,9 +804,11 @@ def api_get_all_epl_interfaces(request):
             if response.status_code == 200:
                 car_ip = response.json()['junos:address'][0]['name'].split('/')[0]
             else: 
-                url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/set/gateway'
+                # url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={switch}/config/tailf-ned-cienacli-acos:interface/set/gateway'
+                url = f'{settings.NSO_ADDRESS}/restconf/data/tailf-ncs:devices/device={router}/address'
                 response = get_request(url)
-                car_ip = response.json()['tailf-ned-cienacli-acos:gateway']
+                # car_ip = response.json()['tailf-ned-cienacli-acos:gateway']
+                car_ip = response.json()['tailf-ncs:address']
 
             # get all vlan 666 ports
             response = future_all_vlan666.result()
